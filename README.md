@@ -1,11 +1,4 @@
 # CeramicCraft 用户端
-
-> 陶瓷工艺品电商平台用户端 - 基于 Vue 3 + TypeScript 构建
-
-## 项目介绍
-
-CeramicCraft 用户端是一个陶瓷工艺品展示和购买平台，为用户提供浏览、购买陶瓷产品的功能。
-
 ## 技术栈
 
 - Vue 3 + TypeScript + Vite
