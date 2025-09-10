@@ -81,19 +81,29 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * 用户登录注册页面
+ * @description 提供用户登录和注册功能的表单页面
+ */
+
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElIcon } from 'element-plus'
 
+/** 路由实例 */
 const router = useRouter()
+
+/** 当前激活的标签页 */
 const activeTab = ref('login')
 
+/** 登录表单数据 */
 const loginForm = ref({
   email: '',
   password: '',
   remember: false
 })
 
+/** 注册表单数据 */
 const registerForm = ref({
   nickname: '',
   email: '',
@@ -101,34 +111,56 @@ const registerForm = ref({
   confirmPassword: ''
 })
 
+/** 是否显示确认密码字段 */
 const showConfirmPassword = ref(false)
 
+/**
+ * 检查密码输入状态
+ * @description 当密码字段有内容时才显示确认密码字段
+ */
 const checkPasswordInput = () => {
-  // 当密码字段有内容时才显示确认密码字段
   showConfirmPassword.value = registerForm.value.password.length > 0
 }
 
+/**
+ * 处理用户登录
+ * @description 验证登录信息并跳转到首页
+ */
 const onLogin = () => {
-  // 登录逻辑，后续可接入 API
+  // 基本表单验证
+  if (!loginForm.value.email || !loginForm.value.password) {
+    alert('Please enter email and password')
+    return
+  }
+
+  // TODO: 接入后端 API 进行登录验证
   console.log('Login:', loginForm.value)
-  // 模拟登录成功，跳转到首页
+  
+  // 模拟登录成功，设置认证状态
+  localStorage.setItem('userToken', 'mock-token-' + Date.now())
+  
+  // 跳转到首页
   router.push('/')
 }
 
+/**
+ * 处理用户注册
+ * @description 验证注册信息并提交注册请求
+ */
 const onRegister = () => {
-  // 基本验证
+  // 基本字段验证
   if (!registerForm.value.nickname || !registerForm.value.email || !registerForm.value.password) {
     alert('Please complete all required fields')
     return
   }
 
-  // 密码验证
+  // 密码一致性验证
   if (showConfirmPassword.value && registerForm.value.password !== registerForm.value.confirmPassword) {
     alert('Passwords do not match')
     return
   }
   
-  // 注册逻辑，后续可接入 API
+  // TODO: 接入后端 API 进行用户注册
   console.log('Register:', registerForm.value)
 }
 </script>

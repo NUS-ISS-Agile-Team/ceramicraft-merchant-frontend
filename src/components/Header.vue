@@ -13,7 +13,7 @@
         <router-link to="/contact" class="nav-link">Contact</router-link>
       </nav>
       <div class="actions">
-        <el-icon class="action-icon"><User /></el-icon>
+        <el-icon class="action-icon" @click="handleUserClick" title="用户菜单"><User /></el-icon>
         <el-icon class="action-icon"><Search /></el-icon>
         <div class="cart-icon">
           <el-icon class="action-icon"><ShoppingCart /></el-icon>
@@ -25,7 +25,29 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * 头部导航组件
+ * @description 包含品牌logo、导航菜单和用户操作区域的头部组件
+ */
+
 import { User, Search, ShoppingCart } from '@element-plus/icons-vue'
+import { useRouter } from 'vue-router'
+
+/** 路由实例 */
+const router = useRouter()
+
+/**
+ * 处理用户图标点击
+ * @description 简单的退出登录功能（临时实现）
+ */
+const handleUserClick = () => {
+  if (confirm('确定要退出登录吗？')) {
+    // 清除认证状态
+    localStorage.removeItem('userToken')
+    // 跳转到登录页面
+    router.push('/auth/login')
+  }
+}
 </script>
 
 <style scoped>

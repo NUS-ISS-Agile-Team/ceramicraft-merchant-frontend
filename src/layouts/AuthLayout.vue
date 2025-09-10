@@ -5,7 +5,10 @@
 </template>
 
 <script setup lang="ts">
-// AuthLayout component for authentication pages
+/**
+ * 认证页面布局组件
+ * @description 为登录注册等认证页面提供简洁的布局
+ */
 </script>
 
 <style scoped>

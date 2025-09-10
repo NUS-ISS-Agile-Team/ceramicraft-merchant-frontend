@@ -37,9 +37,20 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * 底部组件
+ * @description 包含站点链接、语言切换、社交媒体链接和Cookie提示的底部组件
+ */
+
 import { ref, onMounted } from 'vue'
+
+/** 是否显示Cookie提示 */
 const showCookieNotice = ref(false)
 
+/**
+ * 组件挂载时执行
+ * @description 检查用户是否已接受Cookie，决定是否显示Cookie提示
+ */
 onMounted(() => {
   // 检查是否已接受 cookies
   const cookiesAccepted = localStorage.getItem('cookiesAccepted') === 'true'
@@ -53,6 +64,10 @@ onMounted(() => {
   }
 })
 
+/**
+ * 接受Cookie处理
+ * @description 保存用户接受Cookie的状态并隐藏提示
+ */
 function acceptCookies() {
   localStorage.setItem('cookiesAccepted', 'true')
   showCookieNotice.value = false
