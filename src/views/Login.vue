@@ -88,8 +88,6 @@
 
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElIcon } from 'element-plus'
-
 /** 路由实例 */
 const router = useRouter()
 
