@@ -40,7 +40,7 @@ jobs:
   deploy:
     if : ${{ github.event.inputs.command == 'deploy'}}
     needs: build
-    runs-on: self-hosted
+    runs-on: /Users/lian/js/ceramicraft-customer-frontend/.github/workflows/zap.yml
     env:
       DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
     steps:
@@ -51,7 +51,7 @@ jobs:
         run: |
           docker stop ceramicraft-merchant-frontend || true
           docker rm ceramicraft-merchant-frontend || true
-          docker run -d --name ceramicraft-merchant-frontend -p 4173:4173 "${DOCKER_HUB_USERNAME}/ceramicraft-merchant-frontend:${{ github.event.inputs.version }}"
+          docker run -d --name ceramicraft-merchant-frontend --network ceramicraft-network -p 4173:4173 "${DOCKER_HUB_USERNAME}/ceramicraft-merchant-frontend:${{ github.event.inputs.version }}"
   restart:
     if : ${{ github.event.inputs.command == 'restart'}}
     runs-on: self-hosted
