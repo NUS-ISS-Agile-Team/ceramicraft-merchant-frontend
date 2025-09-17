@@ -33,7 +33,7 @@ jobs:
       - name: Serve site for ZAP
         run: |
           # 启动 HTTP 服务器（这里用 vite 自带的）
-          npm run dev -- --host 127.0.0.1 --port 4173 &
+          npx serve dist -l 4173 &
           # 等待监听成功
           timeout 60 bash -c 'until nc -z 127.0.0.1 4173; do sleep 1; done'
 

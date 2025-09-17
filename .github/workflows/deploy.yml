@@ -40,7 +40,7 @@ jobs:
   deploy:
     if : ${{ github.event.inputs.command == 'deploy'}}
     needs: build
-    runs-on: /Users/lian/js/ceramicraft-customer-frontend/.github/workflows/zap.yml
+    runs-on: self-hosted
     env:
       DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
     steps:

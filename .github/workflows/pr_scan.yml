@@ -37,7 +37,7 @@ jobs:
         run: snyk test --severity-threshold=high --sarif-file-output=./snyk.sarif
       - name: sarif num of runs
         run: |
-          echo "SARIF 内部 run 条数：" $(jq '.runs | length' snyk.sarif)
+          echo "SARIF run count: " $(jq '.runs | length' snyk.sarif)
           jq '.runs = [.runs[0]]' snyk.sarif > snyk-single.sarif
       - name: Upload SARIF
         uses: github/codeql-action/upload-sarif@v3
