@@ -8,7 +8,7 @@
       <div class="login-header">
         <div class="login-logo">
           <img src="/img/logo.png" alt="CERAMIC-CRAFT Logo" class="logo-image" />
-          <span class="logo-text">CERAMIC-CRAFT</span>
+          <span class="logo-text">CERAMIC-CRAFT (Merchant)</span>
         </div>
       </div>
 
