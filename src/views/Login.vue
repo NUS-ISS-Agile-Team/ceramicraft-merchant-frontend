@@ -74,21 +74,43 @@ const loginForm = ref({
  * 处理用户登录
  * @description 验证登录信息并跳转到首页
  */
-const onLogin = () => {
+const onLogin = async () => {
   // 基本表单验证
   if (!loginForm.value.email || !loginForm.value.password) {
     alert('Please enter email and password')
     return
   }
+  // 邮箱格式校验
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailPattern.test(loginForm.value.email)) {
+    alert('Please enter a valid email address')
+    return
+  }
 
-  // TODO: 接入后端 API 进行登录验证
-  console.log('Login:', loginForm.value)
-
-  // 模拟登录成功，设置认证状态
-  localStorage.setItem('userToken', 'mock-token-' + Date.now())
-
-  // 跳转到首页
-  router.push('/')
+  // 调用后端登录API
+  try {
+    const resp = await fetch('/api/v1/user/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        user_name: loginForm.value.email,
+        password: loginForm.value.password
+      })
+    })
+    const data = await resp.json()
+    if (resp.ok && data?.data?.success && data?.data?.token) {
+      // 登录成功，保存token
+      localStorage.setItem('userToken', data.data.token)
+      router.push('/')
+    } else {
+      alert(data?.msg || 'Login failed')
+    }
+  } catch (err) {
+    alert('Network error, please try again later')
+    console.error(err)
+  }
 }
 </script>
 
