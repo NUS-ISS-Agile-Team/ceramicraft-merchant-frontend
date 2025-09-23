@@ -81,7 +81,7 @@ const onLogin = async () => {
     return
   }
   // 邮箱格式校验
-  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  const emailPattern = /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/
   if (!emailPattern.test(loginForm.value.email)) {
     alert('Please enter a valid email address')
     return
