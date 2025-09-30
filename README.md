@@ -131,3 +131,72 @@ feat: 添加用户登录功能
 fix: 修复首页商品展示问题
 type: 添加产品相关类型定义
 ```
+
+## API 集成
+
+### 后端服务配置
+
+项目集成了以下微服务：
+
+1. **用户微服务** - `http://localhost:8080/user-ms/v1`
+   - 用户登录：`POST /merchant/login`
+   - 用户登出：`POST /merchant/logout`
+   - 用户注册：`POST /merchant/users`
+   - 用户激活：`PUT /merchant/users/activate`
+
+2. **产品微服务** - `http://localhost:8080/product-ms/v1`
+   - 添加商品：`POST /merchant/add`
+   - 获取商品详情：`GET /merchant/product/{id}`
+   - 上架商品：`POST /merchant/publish`
+   - 下架商品：`POST /merchant/unpublish`
+   - 更新库存：`POST /merchant/updateStock`
+
+### 开发环境配置
+
+在 `vite.config.ts` 中配置了API代理：
+
+```typescript
+server: {
+  proxy: {
+    '/user-ms': {
+      target: 'http://localhost:8080',
+      changeOrigin: true,
+      secure: false,
+    },
+    '/product-ms': {
+      target: 'http://localhost:8080',
+      changeOrigin: true,
+      secure: false,
+    }
+  }
+}
+```
+
+### 功能特性
+
+1. **用户认证**
+   - 商家登录/登出
+   - Cookie-based 认证
+   - 路由守卫保护
+
+2. **产品管理**
+   - 添加新产品
+   - 上架/下架产品
+   - 更新库存（仅限下架状态）
+   - 产品图片URL支持
+
+3. **用户体验**
+   - 响应式设计
+   - 友好的通知系统
+   - 表单验证
+   - 加载状态提示
+
+### 启动后端服务
+
+确保后端API服务运行在 `localhost:8080`，然后启动前端开发服务器：
+
+```bash
+npm run dev
+```
+
+访问 `http://localhost:5173` 开始使用应用。
