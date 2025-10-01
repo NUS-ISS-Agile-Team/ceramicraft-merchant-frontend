@@ -56,13 +56,53 @@
                     <span v-if="errors.stock" class="error-message">{{ errors.stock }}</span>
                 </div>
 
-                <!-- Product Image URL -->
+                <!-- Product Image Upload -->
                 <div class="form-group">
-                    <label class="form-label">Product Image URL</label>
-                    <input v-model="form.pic_info" type="url" class="form-input"
-                        placeholder="Enter image URL (optional)" />
-                    <div v-if="form.pic_info" class="image-preview-small">
-                        <img :src="form.pic_info" alt="Product preview" />
+                    <label class="form-label">Product Image</label>
+                    <div class="upload-container">
+                        <div 
+                            class="upload-area" 
+                            :class="{ 'has-image': previewUrl, 'dragover': isDragOver }"
+                            @click="triggerFileInput"
+                            @dragenter.prevent="handleDragEnter"
+                            @dragover.prevent="handleDragOver"
+                            @dragleave.prevent="handleDragLeave"
+                            @drop.prevent="handleDrop"
+                        >
+                            <div v-if="!previewUrl" class="upload-placeholder">
+                                <i class="fas fa-cloud-upload-alt fa-3x upload-icon"></i>
+                                <p class="upload-text">Drag and drop an image here, or</p>
+                                <button type="button" class="select-file-btn">Select File</button>
+                                <p class="upload-text" style="font-size: 12px; color: #9ca3af;">
+                                    Supported formats: JPG, JPEG, PNG (Max 10MB)
+                                </p>
+                            </div>
+                            <div v-else class="image-preview">
+                                <img :src="previewUrl" alt="Product preview" class="preview-img" />
+                                <button 
+                                    type="button" 
+                                    class="remove-image-btn" 
+                                    @click.stop="removeImage"
+                                    title="Remove image"
+                                >
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <input 
+                            ref="fileInput" 
+                            type="file" 
+                            class="file-input" 
+                            accept="image/jpeg,image/jpg,image/png" 
+                            @change="handleFileSelect"
+                        />
+                        <div v-if="uploadProgress > 0 && uploadProgress < 100" class="upload-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" :style="{ width: uploadProgress + '%' }"></div>
+                            </div>
+                            <span class="progress-text">Uploading... {{ uploadProgress }}%</span>
+                        </div>
+                        <span v-if="errors.image" class="error-message">{{ errors.image }}</span>
                     </div>
                 </div>
 
@@ -148,17 +188,136 @@ const form = reactive({
     care_instructions: ''
 })
 
+// Image upload related state
+const fileInput = ref<HTMLInputElement>()
+const previewUrl = ref<string>('')
+const uploadProgress = ref<number>(0)
+const isDragOver = ref<boolean>(false)
+const selectedFile = ref<File | null>(null)
+
 // Form validation errors
 const errors = reactive({
     name: '',
     category: '',
     price: '',
     stock: '',
-    desc: ''
+    desc: '',
+    image: ''
 })
 
 // Form state
 const isSubmitting = ref(false)
+
+// Image upload functions
+const triggerFileInput = () => {
+    fileInput.value?.click()
+}
+
+const handleFileSelect = (event: Event) => {
+    const target = event.target as HTMLInputElement
+    if (target.files && target.files[0]) {
+        processFile(target.files[0])
+    }
+}
+
+const handleDragEnter = (event: DragEvent) => {
+    event.preventDefault()
+    isDragOver.value = true
+}
+
+const handleDragOver = (event: DragEvent) => {
+    event.preventDefault()
+    isDragOver.value = true
+}
+
+const handleDragLeave = (event: DragEvent) => {
+    event.preventDefault()
+    isDragOver.value = false
+}
+
+const handleDrop = (event: DragEvent) => {
+    event.preventDefault()
+    isDragOver.value = false
+    
+    if (event.dataTransfer?.files && event.dataTransfer.files[0]) {
+        processFile(event.dataTransfer.files[0])
+    }
+}
+
+const processFile = (file: File) => {
+    // Reset previous errors
+    errors.image = ''
+    
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png']
+    if (!allowedTypes.includes(file.type)) {
+        errors.image = 'Only JPG, JPEG, and PNG files are allowed'
+        return
+    }
+    
+    // Validate file size (10MB max)
+    const maxSize = 10 * 1024 * 1024 // 10MB
+    if (file.size > maxSize) {
+        errors.image = 'File size must be less than 10MB'
+        return
+    }
+    
+    selectedFile.value = file
+    
+    // Create preview URL
+    if (previewUrl.value) {
+        URL.revokeObjectURL(previewUrl.value)
+    }
+    previewUrl.value = URL.createObjectURL(file)
+    
+    // Upload the image immediately
+    uploadImage()
+}
+
+const uploadImage = async () => {
+    if (!selectedFile.value) return
+    
+    try {
+        uploadProgress.value = 10
+        
+        // Upload image and get image_id
+        const imageId = await ProductAPI.uploadImage(selectedFile.value)
+        
+        uploadProgress.value = 100
+        
+        // Store the image_id in the form
+        form.pic_info = imageId
+        
+        notification.success('Image uploaded successfully!', 'Success')
+        
+        // Reset progress after a short delay
+        setTimeout(() => {
+            uploadProgress.value = 0
+        }, 1000)
+        
+    } catch (error) {
+        console.error('Image upload failed:', error)
+        errors.image = error instanceof Error ? error.message : 'Failed to upload image'
+        removeImage()
+        notification.error('Failed to upload image', 'Upload Error')
+    }
+}
+
+const removeImage = () => {
+    if (previewUrl.value) {
+        URL.revokeObjectURL(previewUrl.value)
+    }
+    previewUrl.value = ''
+    form.pic_info = ''
+    selectedFile.value = null
+    uploadProgress.value = 0
+    errors.image = ''
+    
+    // Reset file input
+    if (fileInput.value) {
+        fileInput.value.value = ''
+    }
+}
 
 // Form validation
 const validateForm = () => {
@@ -479,6 +638,31 @@ const handleCancel = () => {
 
 .file-input {
     display: none;
+}
+
+.upload-progress {
+    margin-top: 16px;
+    text-align: center;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background-color: #e5e7eb;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.progress-fill {
+    height: 100%;
+    background-color: #3b82f6;
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    font-size: 14px;
+    color: #6b7280;
 }
 
 .image-preview-small {

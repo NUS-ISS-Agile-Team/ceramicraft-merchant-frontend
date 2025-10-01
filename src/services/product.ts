@@ -54,6 +54,17 @@ export interface UpdateProductStockRequest {
   stock: number
 }
 
+// 图片上传请求
+export interface ImgUploadRequest {
+  image_type: 'jpg' | 'png' | 'jpeg'
+}
+
+// 图片上传响应
+export interface ImgUploadResponse {
+  image_id: string
+  upload_url: string
+}
+
 // 产品API服务类
 export class ProductAPI {
   private static readonly BASE_URL = '/api/product-ms/v1/merchant'
@@ -137,5 +148,85 @@ export class ProductAPI {
     })
 
     return response.json()
+  }
+
+  /**
+   * 获取图片上传预签名URL
+   * @param imageType 图片类型
+   * @returns Promise<BaseResponse<ImgUploadResponse>>
+   */
+  static async getImageUploadUrl(imageType: 'jpg' | 'png' | 'jpeg'):
+      Promise<BaseResponse<ImgUploadResponse>> {
+    const response = await fetch(`${this.BASE_URL}/images/upload-urls`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({image_type: imageType}),
+      credentials: 'include'
+    })
+
+    return response.json()
+  }
+
+  /**
+   * 上传图片到预签名URL
+   * @param uploadUrl 预签名URL
+   * @param file 图片文件
+   * @returns Promise<Response>
+   */
+  static async uploadImageToUrl(uploadUrl: string, file: File): Promise<Response> {
+    const response = await fetch(uploadUrl, {
+      method: 'PUT',
+      body: file,
+      headers: {
+        'Content-Type': file.type
+      }
+    })
+
+    return response
+  }
+
+  /**
+   * 完整的图片上传流程
+   * @param file 图片文件
+   * @returns Promise<string> 返回image_id
+   */
+  static async uploadImage(file: File): Promise<string> {
+    // 验证文件类型
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png']
+    if (!allowedTypes.includes(file.type)) {
+      throw new Error('Only JPG, JPEG, and PNG files are allowed')
+    }
+
+    // 获取文件扩展名
+    const fileType = file.type.split('/')[1] as 'jpg' | 'png' | 'jpeg'
+    const imageType = fileType === 'jpeg' ? 'jpg' : fileType
+
+    try {
+      // 第一步：获取预签名URL
+      const uploadUrlResponse = await this.getImageUploadUrl(imageType)
+      
+      if (uploadUrlResponse.code !== 200) {
+        throw new Error(uploadUrlResponse.err_msg || 'Failed to get upload URL')
+      }
+
+      if (!uploadUrlResponse.data) {
+        throw new Error('No upload data received')
+      }
+
+      const { upload_url, image_id } = uploadUrlResponse.data
+
+      // 第二步：上传图片到预签名URL
+      const uploadResponse = await this.uploadImageToUrl(upload_url, file)
+      
+      if (!uploadResponse.ok) {
+        throw new Error(`Upload failed with status: ${uploadResponse.status}`)
+      }
+
+      // 返回image_id
+      return image_id
+    } catch (error) {
+      console.error('Image upload failed:', error)
+      throw error
+    }
   }
 }
