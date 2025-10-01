@@ -8,7 +8,7 @@ const API_BASE_URL = '/api/user-ms/v1'
 const CLIENT_TYPE = 'merchant'
 
 // API响应基础类型
-export interface BaseResponse<T = any> {
+export interface BaseResponse<T = unknown> {
   code: number
   data?: T
   err_msg?: string
@@ -100,12 +100,12 @@ export const HTTP_STATUS = {
 
     // 错误处理工具函数
     export const handleAPIError =
-                               (error: any,
+                               (error: BaseResponse | { message?: string } | Error,
                                 defaultMessage = 'An error occurred') => {
-                                 if (error?.err_msg) {
+                                 if (error && typeof error === 'object' && 'err_msg' in error && error.err_msg) {
                                    return error.err_msg
                                  }
-                                 if (error?.message) {
+                                 if (error && typeof error === 'object' && 'message' in error && error.message) {
                                    return error.message
                                  }
                                  return defaultMessage

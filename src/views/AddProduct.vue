@@ -127,7 +127,8 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
-import { ProductAPI, type CreateProductRequest } from '../services/product'
+import { ProductAPI } from '../services/product'
+import type { CreateProductRequest } from '../services/product'
 import { handleAPIError, HTTP_STATUS } from '../services/auth'
 import { notification } from '../utils/notification'
 

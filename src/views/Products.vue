@@ -67,7 +67,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { ProductAPI, type ProductInfo, ProductStatus } from '../services/product'
+import { ProductAPI, ProductStatus } from '../services/product'
+import type { ProductInfo } from '../services/product'
 import { notification } from '../utils/notification'
 import { handleAPIError, HTTP_STATUS } from '../services/auth'
 

@@ -8,13 +8,13 @@
       <div class="login-header">
         <div class="login-logo">
           <img src="/img/logo.png" alt="CERAMIC-CRAFT Logo" class="logo-image" />
-          <span class="logo-text">CERAMIC-CRAFT (MERCHANT)</span>
+          <span class="logo-text">CERAMIC-CRAFT | MERCHANT</span>
         </div>
       </div>
 
       <div class="login-tabs">
         <div class="tab-header">
-          <div class="tab-item active">Login</div>
+          <div class="tab-item active">Login of Merchant</div>
         </div>
         <div class="login-form form-container">
           <div class="form-group">
