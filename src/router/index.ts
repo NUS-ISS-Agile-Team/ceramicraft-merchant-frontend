@@ -24,15 +24,15 @@ const routes: Array<RouteRecordRaw> =
             meta: {requiresAuth: true}
           },
           {
-            path: 'shop',
-            name: 'Shop',
-            component: () => import('../views/Home.vue'),  // 临时使用Home组件
+            path: 'products',
+            name: 'Products',
+            component: () => import('../views/Products.vue'),
             meta: {requiresAuth: true}
           },
           {
-            path: 'contact',
-            name: 'Contact',
-            component: () => import('../views/Home.vue'),  // 临时使用Home组件
+            path: 'products/add',
+            name: 'AddProduct',
+            component: () => import('../views/AddProduct.vue'),
             meta: {requiresAuth: true}
           }
         ]
@@ -66,16 +66,26 @@ router.beforeEach((to, _from, next) => {
   const isAuthenticated =
       localStorage.getItem('userToken')  // 检查本地存储中的认证状态
 
+  console.log('=== Route Guard ===')
+  console.log('To:', to.path)
+  console.log('From:', _from.path)
+  console.log('Is Authenticated:', !!isAuthenticated)
+  console.log('Token:', isAuthenticated)
+  console.log('Requires Auth:', to.meta?.requiresAuth)
+
   // 如果访问需要认证的页面但未登录，重定向到登录页面
   if (to.meta?.requiresAuth && !isAuthenticated) {
+    console.log('Redirecting to login: not authenticated')
     next('/auth/login')
   }
   // 如果已登录但访问登录页面，重定向到首页
   else if (isAuthenticated && to.path === '/auth/login') {
+    console.log('Redirecting to home: already authenticated')
     next('/')
   }
   // 其他情况正常跳转
   else {
+    console.log('Normal navigation allowed')
     next()
   }
 })
