@@ -91,11 +91,6 @@ const onLogin = async () => {
 
   // 调用后端登录API
   try {
-    console.log('Sending login request with:', {
-      email: loginForm.value.email,
-      password: '***hidden***'
-    })
-
     const response = await AuthAPI.login({
       email: loginForm.value.email,
       password: loginForm.value.password
