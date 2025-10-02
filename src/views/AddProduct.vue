@@ -16,7 +16,7 @@
             <form @submit.prevent="handleSubmit" class="product-form">
                 <!-- Product Name -->
                 <div class="form-group">
-                    <label class="form-label required">Product Name *</label>
+                    <label class="form-label required">Product Name</label>
                     <input v-model="form.name" type="text" class="form-input" placeholder="Enter product name"
                         :class="{ 'error': errors.name }" />
                     <span v-if="errors.name" class="error-message">{{ errors.name }}</span>
@@ -25,7 +25,7 @@
                 <!-- Category and Price Row -->
                 <div class="form-row">
                     <div class="form-group half-width">
-                        <label class="form-label required">Category *</label>
+                        <label class="form-label required">Category</label>
                         <select v-model="form.category" class="form-select" :class="{ 'error': errors.category }">
                             <option value="">Select category</option>
                             <option value="pottery">Pottery</option>
@@ -38,7 +38,7 @@
                     </div>
 
                     <div class="form-group half-width">
-                        <label class="form-label required">Price *</label>
+                        <label class="form-label required">Price</label>
                         <div class="price-input-container">
                             <span class="currency-symbol">$</span>
                             <input v-model="form.price" type="number" step="0.01" min="0" class="form-input price-input"
@@ -50,7 +50,7 @@
 
                 <!-- Stock -->
                 <div class="form-group">
-                    <label class="form-label required">Stock *</label>
+                    <label class="form-label required">Stock</label>
                     <input v-model="form.stock" type="number" min="0" class="form-input stock-input" placeholder="0"
                         :class="{ 'error': errors.stock }" />
                     <span v-if="errors.stock" class="error-message">{{ errors.stock }}</span>
@@ -108,7 +108,7 @@
 
                 <!-- Description -->
                 <div class="form-group">
-                    <label class="form-label required">Description *</label>
+                    <label class="form-label required">Description</label>
                     <textarea v-model="form.desc" class="form-textarea" placeholder="Enter product description" rows="4"
                         :class="{ 'error': errors.desc }"></textarea>
                     <span v-if="errors.desc" class="error-message">{{ errors.desc }}</span>

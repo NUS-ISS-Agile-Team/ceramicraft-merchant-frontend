@@ -116,12 +116,6 @@ const onLogin = async () => {
       // 确保token被保存
       const token = jsonData.data || 'login_success_token'
       localStorage.setItem('userToken', token)
-      console.log('Token saved to localStorage:', localStorage.getItem('userToken'))
-      console.log('About to check auth state...')
-
-      // 验证token确实被存储了
-      const storedToken = localStorage.getItem('userToken')
-      console.log('Verification - stored token:', storedToken)
 
       notification.success('Login successful! Redirecting...', 'Welcome')
 
