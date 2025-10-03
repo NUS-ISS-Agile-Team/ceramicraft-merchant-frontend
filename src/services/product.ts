@@ -65,6 +65,22 @@ export interface ImgUploadResponse {
   upload_url: string
 }
 
+// 商品列表查询参数
+export interface ProductListParams {
+  keyword?: string      // 搜索关键词
+  category?: string     // 商品分类
+  offset?: number       // 偏移量，默认0
+  order_by?: number     // 排序方式：0-按更新时间降序，1-按更新时间升序，默认0
+}
+
+// 商品列表响应类型
+export interface ProductListResponse {
+  list: ProductInfo[]
+  total: number
+  offset?: number
+  has_more?: boolean
+}
+
 // 产品API服务类
 export class ProductAPI {
   private static readonly BASE_URL = '/api/product-ms/v1/merchant'
@@ -228,5 +244,56 @@ export class ProductAPI {
       console.error('Image upload failed:', error)
       throw error
     }
+  }
+
+  /**
+   * 获取商家端商品列表
+   * @param params 查询参数
+   * @returns Promise<BaseResponse<ProductListResponse>>
+   */
+  static async getMerchantProductList(params: ProductListParams = {}): 
+      Promise<BaseResponse<ProductListResponse>> {
+    const queryParams = new URLSearchParams()
+    
+    if (params.keyword) queryParams.append('keyword', params.keyword)
+    if (params.category) queryParams.append('category', params.category)
+    if (params.offset !== undefined) queryParams.append('offset', params.offset.toString())
+    if (params.order_by !== undefined) queryParams.append('order_by', params.order_by.toString())
+    
+    const queryString = queryParams.toString()
+    const url = `${this.BASE_URL}/list${queryString ? `?${queryString}` : ''}`
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      credentials: 'include'
+    })
+
+    return response.json()
+  }
+
+  /**
+   * 获取用户端商品列表（用于预览等场景）
+   * @param params 查询参数
+   * @returns Promise<BaseResponse<ProductListResponse>>
+   */
+  static async getCustomerProductList(params: ProductListParams = {}): 
+      Promise<BaseResponse<ProductListResponse>> {
+    const queryParams = new URLSearchParams()
+    
+    if (params.keyword) queryParams.append('keyword', params.keyword)
+    if (params.category) queryParams.append('category', params.category)
+    if (params.offset !== undefined) queryParams.append('offset', params.offset.toString())
+    if (params.order_by !== undefined) queryParams.append('order_by', params.order_by.toString())
+    
+    const queryString = queryParams.toString()
+    const baseUrl = '/api/product-ms/v1/customer'
+    const url = `${baseUrl}/list${queryString ? `?${queryString}` : ''}`
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      credentials: 'include'
+    })
+
+    return response.json()
   }
 }
