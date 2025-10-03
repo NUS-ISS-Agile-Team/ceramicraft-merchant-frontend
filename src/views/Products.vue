@@ -261,7 +261,7 @@ const getImageUrl = (picInfo?: string) => {
             // 返回第一张图片
             return imageArray[0]
         }
-    } catch (error) {
+    } catch {
         // 如果不是JSON格式，直接返回原字符串
         console.log('pic_info is not JSON format, using as direct URL:', picInfo)
     }
