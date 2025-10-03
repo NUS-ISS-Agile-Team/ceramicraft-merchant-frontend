@@ -16,15 +16,10 @@
         <div class="filter-section">
             <div class="search-box">
                 <i class="fas fa-search search-icon"></i>
-                <input 
-                    v-model="searchQuery" 
-                    type="text" 
-                    placeholder="Search products"
-                    class="search-input"
-                    @input="handleSearch"
-                />
+                <input v-model="searchQuery" type="text" placeholder="Search products" class="search-input"
+                    @input="handleSearch" />
             </div>
-            
+
             <div class="filter-group">
                 <select v-model="selectedCategory" @change="handleFilter" class="filter-select">
                     <option value="">All Categories</option>
@@ -33,14 +28,12 @@
                     <option value="vases">Vases</option>
                     <option value="bowls">Bowls</option>
                     <option value="decorative">Decorative Items</option>
-                    <option v-for="category in availableCategories" 
-                        :key="category" 
-                        :value="category"
+                    <option v-for="category in availableCategories" :key="category" :value="category"
                         v-show="!['pottery', 'ceramics', 'vases', 'bowls', 'decorative'].includes(category)">
                         {{ formatCategory(category) }}
                     </option>
                 </select>
-                
+
                 <select v-model="sortOrder" @change="handleSort" class="filter-select">
                     <option value="0">Latest First</option>
                     <option value="1">Oldest First</option>
@@ -98,8 +91,8 @@
                         <i class="fas fa-upload"></i>
                         {{ actionLoading[product.id!] ? 'Publishing...' : 'Publish' }}
                     </button>
-                    <button v-else @click="unpublishProduct(product.id!)"
-                        class="btn btn-sm btn-warning" :disabled="actionLoading[product.id!]">
+                    <button v-else @click="unpublishProduct(product.id!)" class="btn btn-sm btn-warning"
+                        :disabled="actionLoading[product.id!]">
                         <i class="fas fa-download"></i>
                         {{ actionLoading[product.id!] ? 'Unpublishing...' : 'Unpublish' }}
                     </button>
@@ -194,7 +187,7 @@ const loadProducts = async (append = false) => {
 
         if (response.code === HTTP_STATUS.OK && response.data) {
             const newProducts = response.data.list || []
-            
+
             if (append) {
                 products.value.push(...newProducts)
             } else {
@@ -253,7 +246,7 @@ const clearFilters = () => {
 // 工具函数
 const getImageUrl = (picInfo?: string) => {
     if (!picInfo) return '/img/placeholder.svg'
-    
+
     try {
         // 尝试解析JSON字符串格式的图片信息
         const imageArray = JSON.parse(picInfo)
@@ -265,12 +258,12 @@ const getImageUrl = (picInfo?: string) => {
         // 如果不是JSON格式，直接返回原字符串
         console.log('pic_info is not JSON format, using as direct URL:', picInfo)
     }
-    
+
     // 如果是普通字符串且不为空，直接返回
     if (typeof picInfo === 'string' && picInfo.trim()) {
         return picInfo
     }
-    
+
     return '/img/placeholder.svg'
 }
 
@@ -496,8 +489,13 @@ onMounted(() => {
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 .products-grid {
@@ -744,8 +742,13 @@ onMounted(() => {
 }
 
 @keyframes fa-spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 @media (max-width: 768px) {
@@ -790,7 +793,7 @@ onMounted(() => {
         grid-template-columns: 1fr;
         gap: 16px;
     }
-    
+
     .filter-group {
         justify-content: center;
     }

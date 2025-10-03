@@ -60,15 +60,10 @@
                 <div class="form-group">
                     <label class="form-label">Product Image</label>
                     <div class="upload-container">
-                        <div 
-                            class="upload-area" 
-                            :class="{ 'has-image': previewUrl, 'dragover': isDragOver }"
-                            @click="triggerFileInput"
-                            @dragenter.prevent="handleDragEnter"
-                            @dragover.prevent="handleDragOver"
-                            @dragleave.prevent="handleDragLeave"
-                            @drop.prevent="handleDrop"
-                        >
+                        <div class="upload-area" :class="{ 'has-image': previewUrl, 'dragover': isDragOver }"
+                            @click="triggerFileInput" @dragenter.prevent="handleDragEnter"
+                            @dragover.prevent="handleDragOver" @dragleave.prevent="handleDragLeave"
+                            @drop.prevent="handleDrop">
                             <div v-if="!previewUrl" class="upload-placeholder">
                                 <i class="fas fa-cloud-upload-alt fa-3x upload-icon"></i>
                                 <p class="upload-text">Drag and drop an image here, or</p>
@@ -79,23 +74,14 @@
                             </div>
                             <div v-else class="image-preview">
                                 <img :src="previewUrl" alt="Product preview" class="preview-img" />
-                                <button 
-                                    type="button" 
-                                    class="remove-image-btn" 
-                                    @click.stop="removeImage"
-                                    title="Remove image"
-                                >
+                                <button type="button" class="remove-image-btn" @click.stop="removeImage"
+                                    title="Remove image">
                                     <i class="fas fa-times"></i>
                                 </button>
                             </div>
                         </div>
-                        <input 
-                            ref="fileInput" 
-                            type="file" 
-                            class="file-input" 
-                            accept="image/jpeg,image/jpg,image/png" 
-                            @change="handleFileSelect"
-                        />
+                        <input ref="fileInput" type="file" class="file-input" accept="image/jpeg,image/jpg,image/png"
+                            @change="handleFileSelect" />
                         <div v-if="uploadProgress > 0 && uploadProgress < 100" class="upload-progress">
                             <div class="progress-bar">
                                 <div class="progress-fill" :style="{ width: uploadProgress + '%' }"></div>
@@ -238,7 +224,7 @@ const handleDragLeave = (event: DragEvent) => {
 const handleDrop = (event: DragEvent) => {
     event.preventDefault()
     isDragOver.value = false
-    
+
     if (event.dataTransfer?.files && event.dataTransfer.files[0]) {
         processFile(event.dataTransfer.files[0])
     }
@@ -247,54 +233,54 @@ const handleDrop = (event: DragEvent) => {
 const processFile = (file: File) => {
     // Reset previous errors
     errors.image = ''
-    
+
     // Validate file type
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png']
     if (!allowedTypes.includes(file.type)) {
         errors.image = 'Only JPG, JPEG, and PNG files are allowed'
         return
     }
-    
+
     // Validate file size (10MB max)
     const maxSize = 10 * 1024 * 1024 // 10MB
     if (file.size > maxSize) {
         errors.image = 'File size must be less than 10MB'
         return
     }
-    
+
     selectedFile.value = file
-    
+
     // Create preview URL
     if (previewUrl.value) {
         URL.revokeObjectURL(previewUrl.value)
     }
     previewUrl.value = URL.createObjectURL(file)
-    
+
     // Upload the image immediately
     uploadImage()
 }
 
 const uploadImage = async () => {
     if (!selectedFile.value) return
-    
+
     try {
         uploadProgress.value = 10
-        
+
         // Upload image and get image_id
         const imageId = await ProductAPI.uploadImage(selectedFile.value)
-        
+
         uploadProgress.value = 100
-        
+
         // Store the image_id in the form
         form.pic_info = imageId
-        
+
         notification.success('Image uploaded successfully!', 'Success')
-        
+
         // Reset progress after a short delay
         setTimeout(() => {
             uploadProgress.value = 0
         }, 1000)
-        
+
     } catch (error) {
         console.error('Image upload failed:', error)
         errors.image = error instanceof Error ? error.message : 'Failed to upload image'
@@ -312,7 +298,7 @@ const removeImage = () => {
     selectedFile.value = null
     uploadProgress.value = 0
     errors.image = ''
-    
+
     // Reset file input
     if (fileInput.value) {
         fileInput.value.value = ''

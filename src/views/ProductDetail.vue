@@ -28,11 +28,9 @@
                     Back
                 </button>
                 <div class="header-actions">
-                    <button 
-                        @click="toggleProductStatus" 
+                    <button @click="toggleProductStatus"
                         :class="['btn', product.status === 1 ? 'btn-warning' : 'btn-success']"
-                        :disabled="actionLoading"
-                    >
+                        :disabled="actionLoading">
                         <i :class="product.status === 1 ? 'fas fa-download' : 'fas fa-upload'"></i>
                         {{ actionLoading ? 'Processing...' : (product.status === 1 ? 'Unpublish' : 'Publish') }}
                     </button>
@@ -62,7 +60,7 @@
                         </div>
                         <h1 class="product-name">{{ product.name }}</h1>
                         <p class="product-category">{{ formatCategory(product.category) }}</p>
-                        
+
                         <div class="price-stock">
                             <div class="price-info">
                                 <span class="price-label">Price</span>
@@ -158,9 +156,9 @@ const loadProductDetail = async () => {
     try {
         isLoading.value = true
         error.value = ''
-        
+
         const response = await ProductAPI.getProduct(productId.value)
-        
+
         if (response.code === HTTP_STATUS.OK && response.data) {
             product.value = response.data
         } else {
@@ -176,7 +174,7 @@ const loadProductDetail = async () => {
 
 const getImageUrl = (picInfo?: string) => {
     if (!picInfo) return '/img/placeholder.svg'
-    
+
     try {
         // 尝试解析JSON字符串格式的图片信息
         const imageArray = JSON.parse(picInfo)
@@ -188,12 +186,12 @@ const getImageUrl = (picInfo?: string) => {
         // 如果不是JSON格式，直接返回原字符串
         console.log('pic_info is not JSON format, using as direct URL:', picInfo)
     }
-    
+
     // 如果是普通字符串且不为空，直接返回
     if (typeof picInfo === 'string' && picInfo.trim()) {
         return picInfo
     }
-    
+
     return '/img/placeholder.svg'
 }
 
@@ -207,22 +205,22 @@ const goBack = () => {
 
 const toggleProductStatus = async () => {
     if (!product.value) return
-    
+
     actionLoading.value = true
     try {
         let response
-        
+
         if (product.value.status === ProductStatus.PUBLISHED) {
             response = await ProductAPI.unpublishProduct(product.value.id!)
         } else {
             response = await ProductAPI.publishProduct(product.value.id!)
         }
-        
+
         if (response.code === HTTP_STATUS.OK) {
-            product.value.status = product.value.status === ProductStatus.PUBLISHED 
-                ? ProductStatus.UNPUBLISHED 
+            product.value.status = product.value.status === ProductStatus.PUBLISHED
+                ? ProductStatus.UNPUBLISHED
                 : ProductStatus.PUBLISHED
-            
+
             const action = product.value.status === ProductStatus.PUBLISHED ? 'published' : 'unpublished'
             notification.success(`Product ${action} successfully!`, 'Success')
         } else {
@@ -238,17 +236,17 @@ const toggleProductStatus = async () => {
 
 const updateStock = async () => {
     if (!product.value) return
-    
+
     if (product.value.status === ProductStatus.PUBLISHED) {
         notification.warning('Please unpublish the product first before updating stock', 'Cannot Update Stock')
         return
     }
 
     const newStock = prompt(
-        `Current stock: ${product.value.stock}\nEnter new stock quantity:`, 
+        `Current stock: ${product.value.stock}\nEnter new stock quantity:`,
         product.value.stock?.toString()
     )
-    
+
     if (newStock === null) return
 
     const stockNumber = parseInt(newStock)
@@ -308,8 +306,13 @@ onMounted(() => {
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 /* Error State */
@@ -509,13 +512,15 @@ onMounted(() => {
     margin-bottom: 32px;
 }
 
-.price-info, .stock-info {
+.price-info,
+.stock-info {
     display: flex;
     flex-direction: column;
     gap: 4px;
 }
 
-.price-label, .stock-label {
+.price-label,
+.stock-label {
     font-size: 14px;
     color: #64748b;
     font-weight: 500;
