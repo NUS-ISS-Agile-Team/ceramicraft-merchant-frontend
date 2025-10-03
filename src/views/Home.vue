@@ -45,11 +45,11 @@
 
 <style scoped>
 .home {
-  padding: 40px 20px;
-  max-width: 1200px;
-  margin: 0 auto;
+  width: 100%;
+  padding: 40px 24px;
   background: #f8f9fb;
   min-height: 100vh;
+  box-sizing: border-box;
 }
 
 .welcome-section {
@@ -80,9 +80,9 @@
 
 .action-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 24px;
-  max-width: 800px;
+  max-width: 900px;
   margin: 0 auto;
 }
 

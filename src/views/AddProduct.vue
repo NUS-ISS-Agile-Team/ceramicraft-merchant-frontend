@@ -413,11 +413,13 @@ const handleCancel = () => {
 
 <style scoped>
 .add-product-container {
-    max-width: 800px;
+    width: 100%;
+    max-width: 900px;
     margin: 0 auto;
     padding: 24px;
     background: #f8f9fb;
     min-height: 100vh;
+    box-sizing: border-box;
 }
 
 .header {
@@ -742,23 +744,39 @@ const handleCancel = () => {
 @media (max-width: 768px) {
     .add-product-container {
         padding: 16px;
+        max-width: none;
     }
 
     .form-container {
-        padding: 24px 16px;
+        padding: 20px 16px;
     }
 
     .form-row {
         flex-direction: column;
-        gap: 24px;
+        gap: 20px;
     }
 
     .form-actions {
         flex-direction: column-reverse;
+        gap: 12px;
     }
 
     .btn {
         width: 100%;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+    .add-product-container {
+        padding: 20px;
+        max-width: 800px;
+    }
+}
+
+@media (min-width: 1025px) {
+    .add-product-container {
+        padding: 32px 24px;
+        max-width: 900px;
     }
 }
 </style>

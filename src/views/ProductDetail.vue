@@ -279,11 +279,13 @@ onMounted(() => {
 
 <style scoped>
 .product-detail-container {
-    max-width: 1200px;
+    width: 100%;
+    max-width: 1300px;
     margin: 0 auto;
     padding: 24px;
     background: #f8f9fb;
     min-height: 100vh;
+    box-sizing: border-box;
 }
 
 /* Loading State */
@@ -577,6 +579,7 @@ onMounted(() => {
 @media (max-width: 768px) {
     .product-detail-container {
         padding: 16px;
+        max-width: none;
     }
 
     .detail-header {
@@ -587,12 +590,14 @@ onMounted(() => {
 
     .header-actions {
         justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 8px;
     }
 
     .product-content {
         grid-template-columns: 1fr;
         gap: 32px;
-        padding: 24px;
+        padding: 20px;
     }
 
     .product-name {
@@ -600,11 +605,33 @@ onMounted(() => {
     }
 
     .price-stock {
-        gap: 24px;
+        gap: 20px;
     }
 
     .spec-grid {
         grid-template-columns: 1fr;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+    .product-detail-container {
+        padding: 20px;
+        max-width: 1100px;
+    }
+
+    .product-content {
+        padding: 28px;
+    }
+}
+
+@media (min-width: 1025px) {
+    .product-detail-container {
+        padding: 32px 24px;
+        max-width: 1300px;
+    }
+
+    .product-content {
+        padding: 32px;
     }
 }
 </style>

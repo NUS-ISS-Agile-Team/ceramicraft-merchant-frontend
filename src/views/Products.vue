@@ -70,55 +70,53 @@
                 </button>
             </div>
 
-            <div v-else>
-                <div class="product-card" v-for="product in products" :key="product.id">
-                    <div class="product-image">
-                        <img :src="getImageUrl(product.pic_info)" :alt="product.name" />
-                        <div class="product-overlay">
-                            <button @click="viewProduct(product.id!)" class="overlay-btn">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="product-info">
-                        <h3 class="product-name">{{ product.name }}</h3>
-                        <p class="product-category">{{ formatCategory(product.category) }}</p>
-                        <div class="product-details">
-                            <span class="product-price">${{ (product.price / 100).toFixed(2) }}</span>
-                            <span class="product-stock">{{ product.stock }} in stock</span>
-                        </div>
-                        <div class="product-status">
-                            <span :class="['status-badge', product.status === 1 ? 'published' : 'unpublished']">
-                                {{ product.status === 1 ? 'Published' : 'Unpublished' }}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="product-actions">
-                        <button v-if="product.status === 0" @click="publishProduct(product.id!)"
-                            class="btn btn-sm btn-success" :disabled="actionLoading[product.id!]">
-                            <i class="fas fa-upload"></i>
-                            {{ actionLoading[product.id!] ? 'Publishing...' : 'Publish' }}
-                        </button>
-                        <button v-else @click="unpublishProduct(product.id!)" 
-                            class="btn btn-sm btn-warning" :disabled="actionLoading[product.id!]">
-                            <i class="fas fa-download"></i>
-                            {{ actionLoading[product.id!] ? 'Unpublishing...' : 'Unpublish' }}
-                        </button>
-                        <button @click="updateStock(product)" class="btn btn-sm btn-outline">
-                            <i class="fas fa-boxes"></i>
-                            Stock
+            <div v-for="product in products" :key="product.id" class="product-card">
+                <div class="product-image">
+                    <img :src="getImageUrl(product.pic_info)" :alt="product.name" />
+                    <div class="product-overlay">
+                        <button @click="viewProduct(product.id!)" class="overlay-btn">
+                            <i class="fas fa-eye"></i>
                         </button>
                     </div>
                 </div>
-
-                <!-- Load More Button -->
-                <div v-if="hasMore" class="load-more-section">
-                    <button @click="loadMore" class="btn btn-outline" :disabled="isLoadingMore">
-                        <i v-if="isLoadingMore" class="fas fa-spinner fa-spin"></i>
-                        <i v-else class="fas fa-chevron-down"></i>
-                        {{ isLoadingMore ? 'Loading...' : 'Load More' }}
+                <div class="product-info">
+                    <h3 class="product-name">{{ product.name }}</h3>
+                    <p class="product-category">{{ formatCategory(product.category) }}</p>
+                    <div class="product-details">
+                        <span class="product-price">${{ (product.price / 100).toFixed(2) }}</span>
+                        <span class="product-stock">{{ product.stock }} in stock</span>
+                    </div>
+                    <div class="product-status">
+                        <span :class="['status-badge', product.status === 1 ? 'published' : 'unpublished']">
+                            {{ product.status === 1 ? 'Published' : 'Unpublished' }}
+                        </span>
+                    </div>
+                </div>
+                <div class="product-actions">
+                    <button v-if="product.status === 0" @click="publishProduct(product.id!)"
+                        class="btn btn-sm btn-success" :disabled="actionLoading[product.id!]">
+                        <i class="fas fa-upload"></i>
+                        {{ actionLoading[product.id!] ? 'Publishing...' : 'Publish' }}
+                    </button>
+                    <button v-else @click="unpublishProduct(product.id!)"
+                        class="btn btn-sm btn-warning" :disabled="actionLoading[product.id!]">
+                        <i class="fas fa-download"></i>
+                        {{ actionLoading[product.id!] ? 'Unpublishing...' : 'Unpublish' }}
+                    </button>
+                    <button @click="updateStock(product)" class="btn btn-sm btn-outline">
+                        <i class="fas fa-boxes"></i>
+                        Stock
                     </button>
                 </div>
+            </div>
+
+            <!-- Load More Button -->
+            <div v-if="hasMore" class="load-more-section">
+                <button @click="loadMore" class="btn btn-outline" :disabled="isLoadingMore">
+                    <i v-if="isLoadingMore" class="fas fa-spinner fa-spin"></i>
+                    <i v-else class="fas fa-chevron-down"></i>
+                    {{ isLoadingMore ? 'Loading...' : 'Load More' }}
+                </button>
             </div>
         </div>
     </div>
@@ -370,11 +368,11 @@ onMounted(() => {
 
 <style scoped>
 .products-container {
-    max-width: 1400px;
-    margin: 0 auto;
+    width: 100%;
     padding: 24px;
     background: #f8f9fb;
     min-height: 100vh;
+    box-sizing: border-box;
 }
 
 .header {
@@ -504,8 +502,9 @@ onMounted(() => {
 
 .products-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+    padding: 0;
 }
 
 .empty-state {
@@ -786,7 +785,7 @@ onMounted(() => {
     }
 }
 
-@media (max-width: 1024px) and (min-width: 769px) {
+@media (min-width: 769px) and (max-width: 1024px) {
     .filter-section {
         grid-template-columns: 1fr;
         gap: 16px;
@@ -797,19 +796,22 @@ onMounted(() => {
     }
 
     .products-grid {
-        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    }
-}
-
-@media (min-width: 1025px) and (max-width: 1200px) {
-    .products-grid {
-        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    }
-}
-
-@media (min-width: 1201px) {
-    .products-grid {
         grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 20px;
+    }
+}
+
+@media (min-width: 1025px) and (max-width: 1400px) {
+    .products-grid {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 24px;
+    }
+}
+
+@media (min-width: 1401px) {
+    .products-grid {
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 24px;
     }
 }
 </style>

@@ -1,31 +1,44 @@
 <template>
   <div class="app-layout">
-    <!-- 顶部导航栏 -->
-    <header class="app-header">
-      <div class="header-content">
+    <!-- 左侧边栏 -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
         <div class="logo-section">
           <img src="/img/logo.png" alt="CERAMIC-CRAFT Logo" class="logo-image" />
           <span class="logo-text">CERAMIC-CRAFT</span>
         </div>
-
-        <nav class="nav-menu">
-          <router-link to="/" class="nav-item" active-class="active">Home</router-link>
-          <router-link to="/products" class="nav-item" active-class="active">Products</router-link>
-        </nav>
-
-        <div class="user-section">
-          <button @click="handleLogout" class="logout-btn">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-              <polyline points="16,17 21,12 16,7" />
-              <line x1="21" y1="12" x2="9" y2="12" />
-            </svg>
-            Logout
-          </button>
-        </div>
       </div>
-    </header>
 
+      <nav class="sidebar-nav">
+        <router-link to="/" class="nav-item" active-class="active">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            <polyline points="9,22 9,12 15,12 15,22" />
+          </svg>
+          <span>Home</span>
+        </router-link>
+        <router-link to="/products" class="nav-item" active-class="active">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+            <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+          </svg>
+          <span>Products</span>
+        </router-link>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button @click="handleLogout" class="logout-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16,17 21,12 16,7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+          <span>Logout</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- 主内容区域 -->
     <main class="main-content">
       <router-view />
     </main>
@@ -63,7 +76,6 @@ const handleLogout = async () => {
 <style scoped>
 .app-layout {
   display: flex;
-  flex-direction: column;
   min-height: 100vh;
   width: 100%;
   margin: 0;
@@ -72,20 +84,24 @@ const handleLogout = async () => {
   position: relative;
 }
 
-.app-header {
+/* 左侧边栏样式 */
+.sidebar {
+  width: 260px;
   background: white;
-  border-bottom: 1px solid #e5e7eb;
-  padding: 0 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-right: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh;
+  z-index: 1000;
 }
 
-.header-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 64px;
+.sidebar-header {
+  padding: 24px 20px;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .logo-section {
@@ -95,116 +111,192 @@ const handleLogout = async () => {
 }
 
 .logo-image {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   object-fit: contain;
 }
 
 .logo-text {
-  font-weight: 600;
-  font-size: 20px;
+  font-weight: 700;
+  font-size: 18px;
   color: #1e293b;
   letter-spacing: 0.5px;
 }
 
-.nav-menu {
+.sidebar-nav {
+  flex: 1;
+  padding: 20px 0;
   display: flex;
-  align-items: center;
-  gap: 32px;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   text-decoration: none;
   color: #64748b;
   font-weight: 500;
-  font-size: 16px;
-  transition: color 0.2s;
+  font-size: 15px;
+  padding: 12px 20px;
+  margin: 0 12px;
+  border-radius: 8px;
+  transition: all 0.2s;
   position: relative;
 }
 
 .nav-item:hover {
-  color: #dc6643;
+  background: #f8fafc;
+  color: #334155;
 }
 
 .nav-item.active {
+  background: #fef2f2;
   color: #dc6643;
+  border: 1px solid #fecaca;
 }
 
-.nav-item.active::after {
-  content: '';
-  position: absolute;
-  bottom: -21px;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background-color: #dc6643;
+.nav-item svg {
+  flex-shrink: 0;
 }
 
-.user-section {
-  display: flex;
-  align-items: center;
+.sidebar-footer {
+  padding: 20px;
+  border-top: 1px solid #e5e7eb;
 }
 
 .logout-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   background: transparent;
   border: 1px solid #d1d5db;
-  color: #374151;
-  padding: 8px 16px;
-  border-radius: 6px;
+  color: #64748b;
+  padding: 12px 16px;
+  border-radius: 8px;
   font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
+  width: 100%;
+  justify-content: flex-start;
 }
 
 .logout-btn:hover {
   background: #f3f4f6;
   border-color: #9ca3af;
+  color: #374151;
 }
 
+.logout-btn svg {
+  flex-shrink: 0;
+}
+
+/* 主内容区域样式 */
 .main-content {
   flex: 1;
-  width: 100%;
+  margin-left: 260px;
   background: #f8f9fb;
   display: flex;
   flex-direction: column;
-  margin: 0;
+  min-height: 100vh;
   padding: 0;
-  min-height: 0;
+}
+
+/* 响应式设计 */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 240px;
+  }
+
+  .main-content {
+    margin-left: 240px;
+  }
 }
 
 @media (max-width: 768px) {
-  .app-header {
-    padding: 0 16px;
+  .sidebar {
+    width: 200px;
   }
 
-  .header-content {
-    height: 56px;
+  .main-content {
+    margin-left: 200px;
   }
 
-  .nav-menu {
-    gap: 16px;
+  .logo-text {
+    font-size: 16px;
   }
 
   .nav-item {
     font-size: 14px;
+    padding: 10px 16px;
+    margin: 0 8px;
   }
 
-  .logo-text {
-    font-size: 18px;
+  .sidebar-header {
+    padding: 20px 16px;
+  }
+
+  .sidebar-footer {
+    padding: 16px;
   }
 }
 
 @media (max-width: 640px) {
-  .nav-menu {
+  .sidebar {
+    width: 100%;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .main-content {
+    margin-left: 0;
+  }
+
+  .logo-text {
     display: none;
   }
 
+  .nav-item span {
+    display: none;
+  }
+
+  .logout-btn span {
+    display: none;
+  }
+
+  .sidebar {
+    width: 60px;
+    transform: translateX(0);
+  }
+
+  .sidebar-header {
+    padding: 20px 8px;
+    justify-content: center;
+  }
+
+  .logo-section {
+    justify-content: center;
+  }
+
+  .nav-item {
+    justify-content: center;
+    padding: 12px 8px;
+    margin: 0 8px;
+  }
+
   .logout-btn {
-    padding: 6px 12px;
-    font-size: 12px;
+    justify-content: center;
+    padding: 12px 8px;
+  }
+
+  .main-content {
+    margin-left: 60px;
   }
 }
 </style>
