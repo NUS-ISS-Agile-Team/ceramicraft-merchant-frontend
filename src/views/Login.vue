@@ -14,7 +14,7 @@
 
       <div class="login-tabs">
         <div class="tab-header">
-          <div class="tab-item active">Login of Merchant</div>
+          <div class="tab-item active">Login</div>
         </div>
         <div class="login-form form-container">
           <div class="form-group">
@@ -61,7 +61,7 @@
 
 import { ref, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import { AuthAPI, handleAPIError, HTTP_STATUS } from '../services/auth'
+import { AuthAPI, HTTP_STATUS } from '../services/auth'
 import { notification } from '../utils/notification'
 /** 路由实例 */
 const router = useRouter()
@@ -96,55 +96,37 @@ const onLogin = async () => {
       password: loginForm.value.password
     })
 
-    console.log('Full HTTP Response:', response)
-    console.log('Response status:', response.status)
-    console.log('Response ok:', response.ok)
-    console.log('Response headers:', Object.fromEntries(response.headers.entries()))
-
-    // 解析JSON数据
-    const jsonData = await response.json()
-    console.log('Parsed JSON data:', jsonData)
-    console.log('HTTP Status:', response.status)
-    console.log('JSON Code:', jsonData.code)
-    console.log('HTTP_STATUS.OK:', HTTP_STATUS.OK)
+    console.log('Login response status:', response.status)
 
     if (response.status === HTTP_STATUS.OK) {
-      // 登录成功，token会通过cookie自动设置
-      // 可以选择性地将返回的数据存储到localStorage
+      // 登录成功，解析响应
+      const jsonData = await response.json()
       console.log('Login successful:', jsonData)
 
-      // 确保token被保存
-      const token = jsonData.data || 'login_success_token'
-      localStorage.setItem('userToken', token)
-      console.log('Token saved to localStorage:', localStorage.getItem('userToken'))
-      console.log('About to check auth state...')
-
-      // 验证token确实被存储了
-      const storedToken = localStorage.getItem('userToken')
-      console.log('Verification - stored token:', storedToken)
+      // 保存登录状态（token会通过cookie自动设置）
+      localStorage.setItem('userToken', 'logged_in')
 
       notification.success('Login successful! Redirecting...', 'Welcome')
 
-      // 使用nextTick确保DOM更新完成，然后尝试替换路由而不是推送
+      // 导航到首页
       await nextTick()
-      console.log('After nextTick, attempting navigation...')
-
       try {
-        // 尝试使用replace而不是push来避免路由冲突
-        console.log('Calling router.replace to home...')
         await router.replace('/')
         console.log('Navigation to home successful!')
       } catch (navError) {
         console.error('Router navigation failed:', navError)
-        // 如果路由导航失败，尝试强制刷新到首页
-        console.log('Fallback: forcing navigation with window.location')
         window.location.href = '/'
       }
 
     } else {
-      // 显示错误信息
-      console.error('Login failed - HTTP Status:', response.status, 'JSON Code:', jsonData.code)
-      notification.error(handleAPIError(jsonData, 'Login failed'), 'Login Error')
+      // 登录失败，解析错误信息
+      try {
+        const errorData = await response.json()
+        console.error('Login failed:', errorData)
+        notification.error(errorData.error || 'Login failed', 'Login Error')
+      } catch {
+        notification.error('Login failed', 'Login Error')
+      }
     }
   } catch (err) {
     notification.error('Network error, please try again later', 'Connection Error')

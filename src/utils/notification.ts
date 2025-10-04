@@ -103,3 +103,20 @@ class NotificationManager {
 }
 
 export const notification = new NotificationManager()
+
+// Convenience functions for easier usage
+export const showSuccessNotification = (message: string, title?: string) => {
+  notification.success(message, title)
+}
+
+export const showErrorNotification = (message: string, title?: string) => {
+  notification.error(message, title)
+}
+
+export const showWarningNotification = (message: string, title?: string) => {
+  notification.warning(message, title)
+}
+
+export const showInfoNotification = (message: string, title?: string) => {
+  notification.info(message, title)
+}

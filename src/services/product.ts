@@ -19,7 +19,7 @@ export interface ProductInfo {
   price: number
   stock: number
   desc: string
-  pic_info?: string
+  pic_info?: string | string[] // 支持单张图片(string)或多张图片(string[])
   dimensions?: string
   material?: string
   weight?: string
@@ -35,7 +35,7 @@ export interface CreateProductRequest {
   price: number
   stock: number
   desc: string
-  pic_info?: string
+  pic_info?: string | string[] // 支持单张图片(string)或多张图片(string[])
   dimensions?: string
   material?: string
   weight?: string
@@ -63,6 +63,22 @@ export interface ImgUploadRequest {
 export interface ImgUploadResponse {
   image_id: string
   upload_url: string
+}
+
+// 商品列表查询参数
+export interface ProductListParams {
+  keyword?: string      // 搜索关键词
+  category?: string     // 商品分类
+  offset?: number       // 偏移量，默认0
+  order_by?: number     // 排序方式：0-按更新时间降序，1-按更新时间升序，默认0
+}
+
+// 商品列表响应类型
+export interface ProductListResponse {
+  list: ProductInfo[]
+  total: number
+  offset?: number
+  has_more?: boolean
 }
 
 // 产品API服务类
@@ -157,14 +173,25 @@ export class ProductAPI {
    */
   static async getImageUploadUrl(imageType: 'jpg' | 'png' | 'jpeg'):
       Promise<BaseResponse<ImgUploadResponse>> {
-    const response = await fetch(`${this.BASE_URL}/images/upload-urls`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({image_type: imageType}),
-      credentials: 'include'
-    })
+    try {
+      const response = await fetch(`${this.BASE_URL}/images/upload-urls`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({image_type: imageType}),
+        credentials: 'include'
+      })
 
-    return response.json()
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error('Error getting upload URL:', error)
+      throw error
+    }
   }
 
   /**
@@ -174,15 +201,24 @@ export class ProductAPI {
    * @returns Promise<Response>
    */
   static async uploadImageToUrl(uploadUrl: string, file: File): Promise<Response> {
-    const response = await fetch(uploadUrl, {
-      method: 'PUT',
-      body: file,
-      headers: {
-        'Content-Type': file.type
-      }
-    })
+    try {
+      const response = await fetch(uploadUrl, {
+        method: 'PUT',
+        body: file,
+        headers: {
+          'Content-Type': file.type
+        }
+      })
 
-    return response
+      if (!response.ok) {
+        throw new Error(`Upload failed with status: ${response.status} ${response.statusText}`)
+      }
+
+      return response
+    } catch (error) {
+      console.error('Error uploading to S3:', error)
+      throw error
+    }
   }
 
   /**
@@ -202,31 +238,126 @@ export class ProductAPI {
     const imageType = fileType === 'jpeg' ? 'jpg' : fileType
 
     try {
+      console.log('Step 1: Getting upload URL for image type:', imageType)
+      
       // 第一步：获取预签名URL
       const uploadUrlResponse = await this.getImageUploadUrl(imageType)
       
-      if (uploadUrlResponse.code !== 200) {
+      console.log('Upload URL response:', uploadUrlResponse)
+      
+      // 检查API是否成功响应
+      if (uploadUrlResponse.code && uploadUrlResponse.code !== 200) {
         throw new Error(uploadUrlResponse.err_msg || 'Failed to get upload URL')
       }
+      
+      // 获取数据 - 检查是否有data字段，如果没有则假定整个响应就是数据
+      let responseData: ImgUploadResponse
+      if (uploadUrlResponse.data) {
+        responseData = uploadUrlResponse.data
+      } else {
+        // 如果没有data字段，假定整个响应包含image_id和upload_url
+        responseData = uploadUrlResponse as unknown as ImgUploadResponse
+      }
+      
+      const image_id = responseData.image_id
+      const upload_url = responseData.upload_url
 
-      if (!uploadUrlResponse.data) {
-        throw new Error('No upload data received')
+      console.log('Extracted data:', { image_id, upload_url })
+
+      if (!upload_url || !image_id) {
+        console.error('Missing data in response:', responseData)
+        throw new Error('Incomplete upload data received')
       }
 
-      const { upload_url, image_id } = uploadUrlResponse.data
+      console.log('Step 2: Uploading to S3 with image_id:', image_id)
 
       // 第二步：上传图片到预签名URL
-      const uploadResponse = await this.uploadImageToUrl(upload_url, file)
+      await this.uploadImageToUrl(upload_url, file)
       
-      if (!uploadResponse.ok) {
-        throw new Error(`Upload failed with status: ${uploadResponse.status}`)
-      }
+      console.log('S3 upload completed successfully')
 
-      // 返回image_id
       return image_id
     } catch (error) {
       console.error('Image upload failed:', error)
+      if (error instanceof Error) {
+        throw new Error(`Image upload failed: ${error.message}`)
+      }
+      throw new Error('Image upload failed: Unknown error')
+    }
+  }
+
+  /**
+   * 批量上传多张图片
+   * @param files 图片文件数组
+   * @returns Promise<string[]> 返回图片URL数组
+   */
+  static async uploadMultipleImages(files: File[]): Promise<string[]> {
+    const uploadPromises = files.map(file => this.uploadImage(file))
+    
+    try {
+      const imageUrls = await Promise.all(uploadPromises)
+      console.log('All images uploaded successfully:', imageUrls)
+      return imageUrls
+    } catch (error) {
+      console.error('Failed to upload multiple images:', error)
       throw error
     }
+  }
+
+  /**
+   * 格式化图片信息为字符串（用于存储到数据库）
+   * @param imageUrls 图片URL数组
+   * @returns string JSON字符串格式的图片信息
+   */
+  static formatPicInfo(imageUrls: string[]): string {
+    return JSON.stringify(imageUrls)
+  }
+
+  /**
+   * 解析图片信息字符串
+   * @param picInfo 图片信息字符串
+   * @returns string[] 图片URL数组
+   */
+  static parsePicInfo(picInfo?: string): string[] {
+    if (!picInfo) return []
+    
+    try {
+      const parsed = JSON.parse(picInfo)
+      if (Array.isArray(parsed)) {
+        return parsed
+      } else if (typeof parsed === 'string') {
+        return [parsed]
+      } else {
+        return []
+      }
+    } catch {
+      // 如果不是JSON格式，假定是单张图片的URL
+      return [picInfo]
+    }
+  }
+
+  /**
+   * 获取商家端商品列表
+   * @param params 查询参数
+   * @returns Promise<BaseResponse<ProductListResponse>>
+   */
+  static async getMerchantProductList(params: ProductListParams = {}): 
+      Promise<BaseResponse<ProductListResponse>> {
+    const queryParams = new URLSearchParams()
+    
+    if (params.keyword) queryParams.append('keyword', params.keyword)
+    if (params.category) queryParams.append('category', params.category)
+    if (params.offset !== undefined) queryParams.append('offset', params.offset.toString())
+    if (params.order_by !== undefined) queryParams.append('order_by', params.order_by.toString())
+    
+    const queryString = queryParams.toString()
+    const url = `${this.BASE_URL}/list${queryString ? `?${queryString}` : ''}`
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      credentials: 'include'
+    })
+
+    return response.json()
   }
 }

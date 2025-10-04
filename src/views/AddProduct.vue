@@ -16,7 +16,7 @@
             <form @submit.prevent="handleSubmit" class="product-form">
                 <!-- Product Name -->
                 <div class="form-group">
-                    <label class="form-label required">Product Name *</label>
+                    <label class="form-label required">Product Name</label>
                     <input v-model="form.name" type="text" class="form-input" placeholder="Enter product name"
                         :class="{ 'error': errors.name }" />
                     <span v-if="errors.name" class="error-message">{{ errors.name }}</span>
@@ -25,7 +25,7 @@
                 <!-- Category and Price Row -->
                 <div class="form-row">
                     <div class="form-group half-width">
-                        <label class="form-label required">Category *</label>
+                        <label class="form-label required">Category</label>
                         <select v-model="form.category" class="form-select" :class="{ 'error': errors.category }">
                             <option value="">Select category</option>
                             <option value="pottery">Pottery</option>
@@ -38,7 +38,7 @@
                     </div>
 
                     <div class="form-group half-width">
-                        <label class="form-label required">Price *</label>
+                        <label class="form-label required">Price</label>
                         <div class="price-input-container">
                             <span class="currency-symbol">$</span>
                             <input v-model="form.price" type="number" step="0.01" min="0" class="form-input price-input"
@@ -50,7 +50,7 @@
 
                 <!-- Stock -->
                 <div class="form-group">
-                    <label class="form-label required">Stock *</label>
+                    <label class="form-label required">Stock</label>
                     <input v-model="form.stock" type="number" min="0" class="form-input stock-input" placeholder="0"
                         :class="{ 'error': errors.stock }" />
                     <span v-if="errors.stock" class="error-message">{{ errors.stock }}</span>
@@ -60,42 +60,30 @@
                 <div class="form-group">
                     <label class="form-label">Product Image</label>
                     <div class="upload-container">
-                        <div 
-                            class="upload-area" 
-                            :class="{ 'has-image': previewUrl, 'dragover': isDragOver }"
-                            @click="triggerFileInput"
-                            @dragenter.prevent="handleDragEnter"
-                            @dragover.prevent="handleDragOver"
-                            @dragleave.prevent="handleDragLeave"
-                            @drop.prevent="handleDrop"
-                        >
-                            <div v-if="!previewUrl" class="upload-placeholder">
+                        <div class="upload-area" :class="{ 'has-image': previewUrls.length > 0, 'dragover': isDragOver }"
+                            @click="triggerFileInput" @dragenter.prevent="handleDragEnter"
+                            @dragover.prevent="handleDragOver" @dragleave.prevent="handleDragLeave"
+                            @drop.prevent="handleDrop">
+                            <div v-if="previewUrls.length === 0" class="upload-placeholder">
                                 <i class="fas fa-cloud-upload-alt fa-3x upload-icon"></i>
-                                <p class="upload-text">Drag and drop an image here, or</p>
-                                <button type="button" class="select-file-btn">Select File</button>
+                                <p class="upload-text">Drag and drop images here, or</p>
+                                <button type="button" class="select-file-btn">Select Images</button>
                                 <p class="upload-text" style="font-size: 12px; color: #9ca3af;">
-                                    Supported formats: JPG, JPEG, PNG (Max 10MB)
+                                    Supported formats: JPG, JPEG, PNG (Max 10MB each)
                                 </p>
                             </div>
-                            <div v-else class="image-preview">
-                                <img :src="previewUrl" alt="Product preview" class="preview-img" />
-                                <button 
-                                    type="button" 
-                                    class="remove-image-btn" 
-                                    @click.stop="removeImage"
-                                    title="Remove image"
-                                >
-                                    <i class="fas fa-times"></i>
-                                </button>
+                            <div v-else class="image-previews">
+                                <div v-for="(url, index) in previewUrls" :key="index" class="image-preview-item">
+                                    <img :src="url" :alt="`Product preview ${index + 1}`" class="preview-img" />
+                                    <button type="button" class="remove-image-btn" @click.stop="removeImage(index)"
+                                        :title="`Remove image ${index + 1}`">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                        <input 
-                            ref="fileInput" 
-                            type="file" 
-                            class="file-input" 
-                            accept="image/jpeg,image/jpg,image/png" 
-                            @change="handleFileSelect"
-                        />
+                        <input ref="fileInput" type="file" class="file-input" multiple accept="image/jpeg,image/jpg,image/png"
+                            @change="handleFileSelect" />
                         <div v-if="uploadProgress > 0 && uploadProgress < 100" class="upload-progress">
                             <div class="progress-bar">
                                 <div class="progress-fill" :style="{ width: uploadProgress + '%' }"></div>
@@ -108,7 +96,7 @@
 
                 <!-- Description -->
                 <div class="form-group">
-                    <label class="form-label required">Description *</label>
+                    <label class="form-label required">Description</label>
                     <textarea v-model="form.desc" class="form-textarea" placeholder="Enter product description" rows="4"
                         :class="{ 'error': errors.desc }"></textarea>
                     <span v-if="errors.desc" class="error-message">{{ errors.desc }}</span>
@@ -179,7 +167,7 @@ const form = reactive({
     category: '',
     price: '',
     stock: '',
-    pic_info: '',
+    pic_info: [] as string[], // 改为数组支持多图片
     desc: '',
     dimensions: '',
     material: '',
@@ -190,10 +178,10 @@ const form = reactive({
 
 // Image upload related state
 const fileInput = ref<HTMLInputElement>()
-const previewUrl = ref<string>('')
+const previewUrls = ref<string[]>([]) // 改为数组支持多图片预览
 const uploadProgress = ref<number>(0)
 const isDragOver = ref<boolean>(false)
-const selectedFile = ref<File | null>(null)
+const selectedFiles = ref<File[]>([]) // 改为数组支持多文件
 
 // Form validation errors
 const errors = reactive({
@@ -214,10 +202,16 @@ const triggerFileInput = () => {
 }
 
 const handleFileSelect = (event: Event) => {
-    const target = event.target as HTMLInputElement
-    if (target.files && target.files[0]) {
-        processFile(target.files[0])
-    }
+  const target = event.target as HTMLInputElement
+  if (target.files && target.files.length > 0) {
+    const newFiles = Array.from(target.files)
+    selectedFiles.value = [...selectedFiles.value, ...newFiles]
+    
+    // 为每个新文件生成预览URL
+    newFiles.forEach(file => {
+      processFile(file)
+    })
+  }
 }
 
 const handleDragEnter = (event: DragEvent) => {
@@ -238,85 +232,82 @@ const handleDragLeave = (event: DragEvent) => {
 const handleDrop = (event: DragEvent) => {
     event.preventDefault()
     isDragOver.value = false
-    
-    if (event.dataTransfer?.files && event.dataTransfer.files[0]) {
-        processFile(event.dataTransfer.files[0])
+
+    if (event.dataTransfer?.files && event.dataTransfer.files.length > 0) {
+        const newFiles = Array.from(event.dataTransfer.files)
+        selectedFiles.value = [...selectedFiles.value, ...newFiles]
+        
+        // 为每个文件生成预览并上传
+        newFiles.forEach(file => {
+            processFile(file)
+        })
     }
 }
 
 const processFile = (file: File) => {
     // Reset previous errors
     errors.image = ''
-    
+
     // Validate file type
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png']
     if (!allowedTypes.includes(file.type)) {
         errors.image = 'Only JPG, JPEG, and PNG files are allowed'
         return
     }
-    
+
     // Validate file size (10MB max)
     const maxSize = 10 * 1024 * 1024 // 10MB
     if (file.size > maxSize) {
         errors.image = 'File size must be less than 10MB'
         return
     }
-    
-    selectedFile.value = file
-    
-    // Create preview URL
-    if (previewUrl.value) {
-        URL.revokeObjectURL(previewUrl.value)
-    }
-    previewUrl.value = URL.createObjectURL(file)
-    
+
+    // 生成预览URL并添加到数组
+    const previewUrl = URL.createObjectURL(file)
+    previewUrls.value.push(previewUrl)
+
     // Upload the image immediately
-    uploadImage()
+    uploadImage(file)
 }
 
-const uploadImage = async () => {
-    if (!selectedFile.value) return
-    
+const uploadImage = async (file: File) => {
     try {
         uploadProgress.value = 10
-        
+
         // Upload image and get image_id
-        const imageId = await ProductAPI.uploadImage(selectedFile.value)
-        
+        const imageId = await ProductAPI.uploadImage(file)
+
         uploadProgress.value = 100
-        
-        // Store the image_id in the form
-        form.pic_info = imageId
-        
+
+        // Add the image_id to the form array
+        form.pic_info.push(imageId)
+
         notification.success('Image uploaded successfully!', 'Success')
-        
+
         // Reset progress after a short delay
         setTimeout(() => {
             uploadProgress.value = 0
         }, 1000)
-        
+
     } catch (error) {
         console.error('Image upload failed:', error)
         errors.image = error instanceof Error ? error.message : 'Failed to upload image'
-        removeImage()
         notification.error('Failed to upload image', 'Upload Error')
     }
 }
 
-const removeImage = () => {
-    if (previewUrl.value) {
-        URL.revokeObjectURL(previewUrl.value)
+const removeImage = (index: number) => {
+    // 清理预览URL
+    if (previewUrls.value[index]) {
+        URL.revokeObjectURL(previewUrls.value[index])
     }
-    previewUrl.value = ''
-    form.pic_info = ''
-    selectedFile.value = null
-    uploadProgress.value = 0
-    errors.image = ''
     
-    // Reset file input
-    if (fileInput.value) {
-        fileInput.value.value = ''
-    }
+    // 从数组中移除对应的项目
+    previewUrls.value.splice(index, 1)
+    selectedFiles.value.splice(index, 1)
+    form.pic_info.splice(index, 1)
+    
+    errors.image = ''
 }
 
 // Form validation
@@ -374,7 +365,7 @@ const handleSubmit = async () => {
         const productData: CreateProductRequest = {
             name: form.name,
             category: form.category,
-            price: parseFloat(form.price),
+            price: parseFloat(form.price) * 100, 
             stock: parseInt(form.stock),
             desc: form.desc,
             pic_info: form.pic_info || undefined,
@@ -413,11 +404,13 @@ const handleCancel = () => {
 
 <style scoped>
 .add-product-container {
-    max-width: 800px;
+    width: 100%;
+    max-width: 900px;
     margin: 0 auto;
     padding: 24px;
     background: #f8f9fb;
     min-height: 100vh;
+    box-sizing: border-box;
 }
 
 .header {
@@ -739,26 +732,86 @@ const handleCancel = () => {
     margin-top: 4px;
 }
 
+/* 多图片预览样式 */
+.image-previews {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.image-preview-item {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #f8f9fa;
+    aspect-ratio: 1;
+}
+
+.image-preview-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.image-preview-item .remove-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.image-preview-item .remove-btn:hover {
+    background: rgba(0, 0, 0, 0.9);
+}
+
 @media (max-width: 768px) {
     .add-product-container {
         padding: 16px;
+        max-width: none;
     }
 
     .form-container {
-        padding: 24px 16px;
+        padding: 20px 16px;
     }
 
     .form-row {
         flex-direction: column;
-        gap: 24px;
+        gap: 20px;
     }
 
     .form-actions {
         flex-direction: column-reverse;
+        gap: 12px;
     }
 
     .btn {
         width: 100%;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+    .add-product-container {
+        padding: 20px;
+        max-width: 800px;
+    }
+}
+
+@media (min-width: 1025px) {
+    .add-product-container {
+        padding: 32px 24px;
+        max-width: 900px;
     }
 }
 </style>
