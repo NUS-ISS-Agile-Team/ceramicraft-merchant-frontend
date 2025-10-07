@@ -16,11 +16,11 @@ export default defineConfig({
   server: {
     port: 5173, // Port for `vite dev`
     host: '0.0.0.0', // Listen on all network interfaces
-    allowedHosts: ['ceramicraft-merchant-frontend', 'localhost', '127.0.0.1'],
+    allowedHosts: true, // 允许所有主机访问
     proxy: {
       // 匹配所有以 /api 开头的请求，统一代理到后端
       '/api': {
-        target: 'http://13.214.199.77',
+        target: 'http://47.129.72.211',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/api/, '') // 将 /api/user-ms/... 重写为 /user-ms/...
@@ -30,6 +30,6 @@ export default defineConfig({
   preview: {
     port: 4173, // Port for `vite preview`
     host: '0.0.0.0', // Listen on all network interfaces
-    allowedHosts: ['ceramicraft-merchant-frontend', 'localhost', '127.0.0.1']
+    allowedHosts: true // 允许所有主机访问
   },
 })
