@@ -54,6 +54,21 @@ export interface UpdateProductStockRequest {
   stock: number
 }
 
+// 更新产品信息请求
+export interface UpdateProductRequest {
+  id: number
+  name?: string
+  category?: string
+  price?: number
+  desc?: string
+  dimensions?: string
+  material?: string
+  weight?: string
+  capacity?: string
+  care_instructions?: string
+  pic_info?: string
+}
+
 // 图片上传请求
 export interface ImgUploadRequest {
   image_type: 'jpg' | 'png' | 'jpeg'
@@ -160,6 +175,23 @@ export class ProductAPI {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({id: productId, stock: stock}),
+      credentials: 'include'
+    })
+
+    return response.json()
+  }
+
+  /**
+   * 编辑商品信息
+   * @param productData 商品更新数据
+   * @returns Promise<BaseResponse>
+   */
+  static async editProduct(productData: UpdateProductRequest):
+      Promise<BaseResponse> {
+    const response = await fetch(`${this.BASE_URL}/edit`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(productData),
       credentials: 'include'
     })
 
