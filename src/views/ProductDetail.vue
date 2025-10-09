@@ -571,7 +571,10 @@ const handleImageUpload = async (event: Event) => {
 }
 
 const saveProduct = async () => {
-  if (!product.value?.id || !isFormValid.value) return
+  if (!product.value?.id || !isFormValid.value) {
+    showErrorNotification('Please fill in all required fields before saving the product.')
+    return
+  }
 
   try {
     editLoading.value = true
