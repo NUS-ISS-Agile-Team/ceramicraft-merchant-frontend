@@ -17,19 +17,18 @@
               <line x1="12" y1="17" x2="12" y2="21"></line>
             </svg>
           </div>
-          <h3>View Products</h3>
+          <h3>Products Management</h3>
           <p>Manage your product inventory</p>
         </router-link>
 
-        <router-link to="/products/add" class="action-card">
+        <router-link to="/orders" class="action-card">
           <div class="action-icon">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10"/>
             </svg>
           </div>
-          <h3>Add Product</h3>
-          <p>Add a new product to your inventory</p>
+          <h3>Order Management</h3>
+          <p>Manage customer orders</p>
         </router-link>
       </div>
     </div>
