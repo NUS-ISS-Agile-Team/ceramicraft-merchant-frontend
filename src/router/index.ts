@@ -41,8 +41,19 @@ const routes: Array<RouteRecordRaw> =
             component: () => import('../views/ProductDetail.vue'),
             meta: {requiresAuth: true},
             props: true
+          },
+          {
+            path: 'orders',
+            name: 'Orders',
+            component: () => import('../views/OrderList.vue')
+          },
+          {
+            path: 'orders/:id',
+            name: 'OrderDetail',
+            component: () => import('../views/OrderDetail.vue')
           }
-        ]
+
+        ]  
       },
 
       // 认证路由 - 登录注册等页面
