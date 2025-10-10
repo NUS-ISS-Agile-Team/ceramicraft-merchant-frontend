@@ -128,20 +128,18 @@ const loading = ref(false)
 const errorMsg = ref('')
 
 const getStatusClass = (status: string) => {
-  switch (status) {
-    case '已发货':
-      return 'status-shipped'
-    case '已支付':
-      return 'status-paid'
-    case '已送达':
-      return 'status-delivered'
-    case '已确认':
-      return 'status-confirmed'
-    case '已取消':
-      return 'status-cancelled'
-    default:
-      return ''
-  }
+  if (!status) return ''
+  const s = String(status).toLowerCase()
+
+  if (s.includes('paid') || status === '已支付') return 'status-paid'
+  if (s.includes('shipped') || status === '已发货') return 'status-shipped'
+  if (s.includes('delivered') || status === '已送达') return 'status-shipped' // use shipped style for delivered
+  if (s.includes('cancel') || status === '已取消') return 'status-cancelled'
+
+  // fallback: if it's a chinese status we don't recognise, try some common words
+  if (status === '已确认') return 'status-paid'
+
+  return ''
 }
 
 // Load recent orders from backend on mount
@@ -366,25 +364,25 @@ onMounted(async () => {
 /* 状态徽章 */
 .status-badge {
   display: inline-block;
-  padding: 4px 12px;
-  border-radius: 12px;
+  padding: 6px 12px;
+  border-radius: 20px;
   font-size: 12px;
   font-weight: 500;
 }
 
-.status-badge.status-shipped {
-  background: #dbeafe;
-  color: #1e40af;
-}
-
-.status-badge.status-paid {
-  background: #fef3c7;
+.status-paid {
+  background-color: #fef3c7;
   color: #92400e;
 }
 
-.status-badge.status-delivered {
-  background: #d1fae5;
+.status-shipped {
+  background-color: #d1fae5;
   color: #065f46;
+}
+
+.status-cancelled {
+  background-color: #fee2e2;
+  color: #991b1b;
 }
 
 /* 操作按钮 */

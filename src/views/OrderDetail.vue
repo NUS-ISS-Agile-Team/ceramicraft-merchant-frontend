@@ -389,25 +389,33 @@ export default {
 
 .status-badge {
   display: inline-block;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 500;
+  padding: 6px 18px;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 600;
+  min-width: 76px;
+  text-align: center;
+  line-height: 1;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.03);
+  border: 1px solid rgba(15, 23, 42, 0.03);
 }
 
 .status-paid {
-  background-color: #fef3c7;
-  color: #92400e;
+  background: #fff8e6;
+  color: #b45309;
+  border-color: rgba(180,83,9,0.08);
 }
 
 .status-shipped {
-  background-color: #d1fae5;
-  color: #065f46;
+  background: #e9fbf1;
+  color: #059669;
+  border-color: rgba(5,150,105,0.06);
 }
 
 .status-cancelled {
-  background-color: #fee2e2;
-  color: #991b1b;
+  background: #fff1f2;
+  color: #b91c1c;
+  border-color: rgba(185,28,28,0.06);
 }
 
 .content-grid {
