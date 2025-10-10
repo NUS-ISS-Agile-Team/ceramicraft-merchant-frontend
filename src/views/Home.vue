@@ -64,13 +64,18 @@
         <button class="view-all-btn">View All</button>
       </div>
 
-      <div class="table-container">
+      <div v-if="errorMsg" class="error-message">{{ errorMsg }}</div>
+
+      <div v-if="loading" class="loading-spinner">
+        Loading...
+      </div>
+
+      <div v-else class="table-container">
         <table class="sales-table">
           <thead>
             <tr>
               <th>ORDER ID</th>
               <th>CUSTOMER</th>
-              <th>PRODUCT</th>
               <th>DATE</th>
               <th>AMOUNT</th>
               <th>STATUS</th>
@@ -86,7 +91,6 @@
                   <div class="cust-phone">{{ sale.phone }}</div>
                 </div>
               </td>
-              <td>{{ sale.product || '—' }}</td>
               <td class="date">{{ sale.date }}</td>
               <td class="amount">{{ sale.amount }}</td>
               <td>
@@ -113,7 +117,6 @@ import { ref, onMounted } from 'vue'
 interface Sale {
   id: string
   customer: string
-  product: string
   date: string
   amount: string
   status: string
@@ -126,12 +129,16 @@ const errorMsg = ref('')
 
 const getStatusClass = (status: string) => {
   switch (status) {
-    case 'Shipped':
+    case '已发货':
       return 'status-shipped'
-    case 'Paid':
+    case '已支付':
       return 'status-paid'
-    case 'Delivered':
+    case '已送达':
       return 'status-delivered'
+    case '已确认':
+      return 'status-confirmed'
+    case '已取消':
+      return 'status-cancelled'
     default:
       return ''
   }
@@ -142,47 +149,41 @@ onMounted(async () => {
   loading.value = true
   errorMsg.value = ''
   try {
-    const { OrderAPI } = await import('../services/order')
-    const resp = await OrderAPI.fetchMerchantOrders({ limit: 5, offset: 0 })
-    console.debug('Home fetchMerchantOrders response:', resp)
+    const response = await fetch('/api/order-ms/v1/merchant/list', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ limit: 5, offset: 0 }),
+      credentials: 'include'
+    })
 
-    let list: any[] = []
-    if (resp && typeof resp === 'object') {
-      if (Array.isArray(resp.data?.orders)) list = resp.data.orders
-      else if (Array.isArray(resp.orders)) list = resp.orders
-      else if (Array.isArray(resp.data)) list = resp.data
-      else if (Array.isArray(resp)) list = resp
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
     }
 
-    recentSales.value = list.map((o) => {
-      const id = o.order_no ?? o.id ?? ''
-      const customerName = [o.receiver_first_name, o.receiver_last_name].filter(Boolean).join(' ') || (o.user_name ?? o.buyer?.name ?? '—')
-      const phone = o.receiver_phone ?? o.buyer?.phone ?? ''
-      const product = o.product_snapshot?.name ?? o.product_name ?? '—'
-      const created = o.create_time ?? o.created_at ?? o.create_time ?? o.create_time
-      const date = created ? new Date(created).toLocaleString() : '—'
-      // total_amount is in cents (e.g. 8430 => $84.30)
-      let amount = '—'
-      if (typeof o.total_amount === 'number') {
-        amount = `$${(o.total_amount / 100).toFixed(2)}`
-      } else if (typeof o.total_amount === 'string') {
-        amount = o.total_amount
-      } else if (o.total_price) {
-        amount = `$${(o.total_price / 100).toFixed(2)}`
-      }
+    const resp = await response.json()
+    console.debug('Home getOrderList response:', resp)
 
-      const status = o.status ?? (o.order_status != null ? ['已创建','已支付','已确认','已发货','已完成','已取消'][o.order_status] : '—')
+    if (resp && resp.data) {
+      const list = resp.data.orders || []
 
-      return {
-        id,
-        customer: customerName,
-        phone,
-        product,
-        date,
-        amount,
-        status
-      }
-    })
+      recentSales.value = list.map((o: any) => {
+        const date = o.create_time ? new Date(o.create_time).toLocaleString() : '—'
+        const amount = typeof o.total_amount === 'number' ? `$${(o.total_amount / 100).toFixed(2)}` : '—'
+        const customerName = [o.receiver_first_name, o.receiver_last_name].filter(Boolean).join(' ') || '—'
+
+        return {
+          id: o.order_no || '—',
+          customer: customerName,
+          phone: o.receiver_phone || '—',
+          date,
+          amount,
+          status: o.status || '—'
+        }
+      })
+    } else {
+      console.warn('Unexpected response format:', resp)
+      errorMsg.value = '获取订单数据失败，请稍后重试'
+    }
   } catch (err: any) {
     console.error('Failed loading recent orders:', err)
     errorMsg.value = err?.message || 'Failed to load recent orders'
@@ -399,6 +400,24 @@ onMounted(async () => {
 
 .action-btn:hover {
   color: #4b5563;
+}
+
+/* 错误和加载状态 */
+.error-message {
+  color: #ef4444;
+  padding: 16px 24px;
+  background: #fee2e2;
+  border-radius: 4px;
+  margin: 12px 24px;
+  font-size: 14px;
+}
+
+.loading-spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 32px;
+  color: #6b7280;
 }
 
 /* 响应式设计 */

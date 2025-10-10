@@ -3,225 +3,210 @@
  * @description 管理订单相关的API调用
  */
 
-import type { BaseResponse } from './auth'
+// API基础配置
+const API_BASE_URL = '/api/order-ms/v1'
 
 // 订单状态枚举
 export enum OrderStatus {
-  CREATED = 0,    // 已创建
-  PAID = 1,       // 已支付
-  CONFIRMED = 2,  // 已确认
+  CREATED = 1,    // 已创建
+  PAID = 2,       // 已支付
   SHIPPED = 3,    // 已发货
-  COMPLETED = 4,  // 已完成
-  CANCELLED = 5   // 已取消
+  DELIVERED = 4,  // 已送达
+  CONFIRMED = 5,  // 已确认收货
+  CANCELLED = 6   // 已取消
 }
 
-// 订单详情类型
-export interface OrderDetail {
-  id: string
-  user_id: number
-  merchant_id: number
+// 订单状态名称映射（英文 -> 中文）
+export const OrderStatusNames: Record<string, string> = {
+  'Created': 'Created',
+  'Paid': 'Paid',
+  'Shipped': 'Shipped',
+  'Delivered': 'Delivered',
+  'Confirmed': 'Confirmed',
+  'Cancelled': 'Cancelled'
+}
+
+// 订单状态样式映射
+export const OrderStatusClassMap: Record<string, string> = {
+  'Created': 'status-created',
+  'Paid': 'status-paid',
+  'Shipped': 'status-shipped',
+  'Delivered': 'status-delivered',
+  'Confirmed': 'status-confirmed',
+  'Cancelled': 'status-cancelled'
+}
+
+// 订单基础信息类型（列表中显示）
+export interface OrderInfoInList {
+  order_no: string
+  receiver_first_name: string
+  receiver_last_name: string
+  receiver_phone: string
+  create_time: string
+  total_amount: number
+  status: string
+}
+
+// 订单商品详情
+export interface OrderItemDetail {
+  id: number
   product_id: number
+  product_name: string
+  price: number
   quantity: number
-  amount: number
-  status: OrderStatus
-  created_at: string
-  updated_at: string
-  product_snapshot?: {
-    name: string
-    price: number
-    pic_info?: string
-  }
-  shipping_address?: {
-    recipient_name: string
-    phone_number: string
-    address: string
-    postal_code: string
-  }
+  total_price: number
+  create_time: string
+  update_time: string
 }
 
-// 获取订单列表的参数
-export interface OrderListParams {
-  page?: number
-  page_size?: number
-  status?: OrderStatus
+// 订单状态日志
+export interface OrderStatusLogDetail {
+  id: number
+  current_status: number
+  status_name: string
+  create_time: string
+  remark: string
+}
+
+// 订单详情
+export interface OrderDetail {
+  order_no: string
+  user_id: number
+  status: number
+  status_name: string
+  total_amount: number
+  pay_amount: number
+  shipping_fee: number
+  tax: number
+  pay_time: string
+  create_time: string
+  update_time: string
+  delivery_time: string
+  confirm_time: string
+  receiver_first_name: string
+  receiver_last_name: string
+  receiver_phone: string
+  receiver_address: string
+  receiver_country: string
+  receiver_zip_code: number
+  remark: string
+  logistics_no: string
+  order_items: OrderItemDetail[]
+  status_logs: OrderStatusLogDetail[]
+}
+
+// 订单列表请求参数
+export interface ListOrderRequest {
+  limit: number
+  offset: number
+  order_no?: string
+  order_status?: number
+  user_id?: number
   start_time?: string
   end_time?: string
 }
 
 // 订单列表响应
-export interface OrderListResponse {
-  orders: OrderDetail[]
+export interface ListOrderResponse {
+  orders: OrderInfoInList[]
   total: number
-  page: number
-  page_size: number
+}
+
+// API响应格式（订单服务使用不同的响应格式）
+export interface OrderApiResponse<T = unknown> {
+  status: number
+  data?: T
+  msg?: string
+  error?: string
 }
 
 // 订单API服务类
 export class OrderAPI {
-  private static readonly BASE_URL = '/api/order-ms/v1/merchant'
-  // Use proxied relative path so dev server (vite) can forward requests to the backend
-  // Vite proxy in vite.config.ts maps '/api' -> 'http://47.129.72.211'
-  private static readonly PROXY_BASE = '/api/order-ms/v1/merchant'
-
   /**
    * 获取订单列表
    * @param params 查询参数
-   * @returns Promise<BaseResponse<OrderListResponse>>
+   * @returns Promise<OrderApiResponse<ListOrderResponse>>
    */
-  static async getOrderList(params: OrderListParams = {}): Promise<BaseResponse<OrderListResponse>> {
-    console.log('Fetching orders with params:', params)
+  static async getOrderList(params: ListOrderRequest): Promise<OrderApiResponse<ListOrderResponse>> {
+    const response = await fetch(`${API_BASE_URL}/merchant/list`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params),
+      credentials: 'include'  // 包含cookies
+    })
 
-    const queryParams = new URLSearchParams()
-    if (params.page !== undefined) queryParams.append('page', params.page.toString())
-    if (params.page_size !== undefined) queryParams.append('page_size', params.page_size.toString())
-    if (params.status !== undefined) queryParams.append('status', params.status.toString())
-    if (params.start_time) queryParams.append('start_time', params.start_time)
-    if (params.end_time) queryParams.append('end_time', params.end_time)
-
-    const queryString = queryParams.toString()
-    const url = `${OrderAPI.BASE_URL}/orders${queryString ? `?${queryString}` : ''}`
-
-    try {
-      const response = await fetch(url, {
-        method: 'GET',
-        credentials: 'include'
-      })
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-
-      return response.json()
-    } catch (error) {
-      console.error('Error fetching orders:', error)
-      throw error
-    }
-  }
-
-  /**
-   * 使用后端提供的 POST 接口获取商户订单列表（外部地址）
-   * 请求体格式参考后端 curl
-   * @param body 请求体字段映射：limit, offset, order_status, order_no, start_time, end_time, user_id
-   */
-  static async fetchMerchantOrders(body: Partial<{ limit: number; offset: number; order_no: string; order_status: number; start_time: string; end_time: string; user_id: number }> = {}): Promise<any> {
-  // Use proxied endpoint to avoid CORS in browser and allow cookies/credentials to be forwarded
-  const url = `${OrderAPI.PROXY_BASE}/list`
-
-    // 从 localStorage 读取 token（前端 login 使用 localStorage.setItem('userToken', 'logged_in')）
-    const token = localStorage.getItem('userToken')
-
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      'accept': 'application/json'
-    }
-
-    if (token) {
-      // 假设后端接受 Bearer token；如果真实后端使用 cookie，则 credentials: 'include' 也会发送 cookie
-      headers['Authorization'] = `Bearer ${token}`
-    }
-
-    try {
-      // 构造请求体，仅包含有值的字段，避免发送空字符串给后端导致解析错误
-      const payload: Record<string, unknown> = {}
-      if (body.limit !== undefined) payload.limit = body.limit
-      if (body.offset !== undefined) payload.offset = body.offset
-      if (body.order_no !== undefined && body.order_no !== '') payload.order_no = body.order_no
-      if (body.order_status !== undefined) payload.order_status = body.order_status
-      if (body.start_time !== undefined && body.start_time !== '') payload.start_time = body.start_time
-      if (body.end_time !== undefined && body.end_time !== '') payload.end_time = body.end_time
-      if (body.user_id !== undefined) payload.user_id = body.user_id
-
-      const response = await fetch(url, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(payload),
-        // 保留 cookie 支持
-        credentials: 'include'
-      })
-
-      if (!response.ok) {
-        const text = await response.text()
-        throw new Error(`HTTP ${response.status} - ${text}`)
-      }
-
-      return response.json()
-    } catch (error) {
-      console.error('Error fetching merchant orders (external):', error)
-      throw error
-    }
+    return response.json()
   }
 
   /**
    * 获取订单详情
-   * @param orderId 订单ID
-   * @returns Promise<BaseResponse<OrderDetail>>
+   * @param orderNo 订单号
+   * @returns Promise<OrderApiResponse<OrderDetail>>
    */
-  static async getOrderDetail(orderId: string): Promise<BaseResponse<OrderDetail>> {
-    console.log('Fetching order detail for ID:', orderId)
+  static async getOrderDetail(orderNo: string): Promise<OrderApiResponse<OrderDetail>> {
+    const response = await fetch(`${API_BASE_URL}/merchant/detail/${orderNo}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include'  // 包含cookies
+    })
 
-    try {
-      const response = await fetch(`${OrderAPI.BASE_URL}/orders/${orderId}`, {
-        method: 'GET',
-        credentials: 'include'
-      })
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-
-      return response.json()
-    } catch (error) {
-      console.error('Error fetching order detail:', error)
-      throw error
-    }
+    return response.json()
   }
 
   /**
-   * 获取今日订单统计
-   * @returns Promise<BaseResponse<{ total_orders: number, total_amount: number }>>
+   * 检查API响应是否成功
+   * @param response API响应
+   * @returns boolean
    */
-  static async getTodayOrders(): Promise<BaseResponse<{ total_orders: number, total_amount: number }>> {
-    console.log('Fetching today\'s orders statistics')
-
-    try {
-      const response = await fetch(`${OrderAPI.BASE_URL}/orders/today`, {
-        method: 'GET',
-        credentials: 'include'
-      })
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-
-      return response.json()
-    } catch (error) {
-      console.error('Error fetching today\'s orders:', error)
-      throw error
-    }
+  static isSuccess(response: OrderApiResponse): boolean {
+    return response.status === 0
   }
 
   /**
-   * 发货订单
-   * @param orderId 订单ID
-   * @returns Promise<BaseResponse<void>>
+   * 格式化金额显示（分转元）
+   * @param amount 金额（分）
+   * @returns string 格式化后的金额字符串
    */
-  static async shipOrder(orderId: string): Promise<BaseResponse<void>> {
-    console.log('Shipping order:', orderId)
+  static formatAmount(amount: number): string {
+    return (amount / 100).toFixed(2)
+  }
 
-    try {
-      const response = await fetch(`${OrderAPI.BASE_URL}/orders/${orderId}/ship`, {
-        method: 'POST',
-        credentials: 'include'
-      })
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-
-      return response.json()
-    } catch (error) {
-      console.error('Error shipping order:', error)
-      throw error
+  /**
+   * 格式化日期显示
+   * @param dateString 日期字符串
+   * @returns string 格式化后的日期字符串
+   */
+  static formatDate(dateString: string): string {
+    if (!dateString || dateString === '0001-01-01T00:00:00Z') {
+      return '-'
     }
+    
+    const date = new Date(dateString)
+    return date.toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    })
+  }
+
+  /**
+   * 获取订单状态的样式类名
+   * @param status 订单状态（英文字符串）
+   * @returns string CSS类名
+   */
+  static getStatusClass(status: string): string {
+    return OrderStatusClassMap[status] || 'status-unknown'
+  }
+
+  /**
+   * 获取订单状态的中文名称
+   * @param status 订单状态（英文字符串）
+   * @returns string 中文状态名称
+   */
+  static getStatusName(status: string): string {
+    return OrderStatusNames[status] || status
   }
 }
