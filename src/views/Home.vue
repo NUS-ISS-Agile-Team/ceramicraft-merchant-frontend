@@ -113,6 +113,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import type { OrderInfoInList } from '../services/order'
 
 interface Sale {
   id: string
@@ -164,7 +165,7 @@ onMounted(async () => {
     if (resp && resp.data) {
       const list = resp.data.orders || []
 
-      recentSales.value = list.map((o: any) => {
+      recentSales.value = list.map((o: OrderInfoInList) => {
         const date = o.create_time ? new Date(o.create_time).toLocaleString() : '—'
         const amount = typeof o.total_amount === 'number' ? `$${(o.total_amount / 100).toFixed(2)}` : '—'
         const customerName = [o.receiver_first_name, o.receiver_last_name].filter(Boolean).join(' ') || '—'
@@ -182,9 +183,13 @@ onMounted(async () => {
       console.warn('Unexpected response format:', resp)
       errorMsg.value = '获取订单数据失败，请稍后重试'
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Failed loading recent orders:', err)
-    errorMsg.value = err?.message || 'Failed to load recent orders'
+    if (err instanceof Error) {
+      errorMsg.value = err.message || 'Failed to load recent orders'
+    } else {
+      errorMsg.value = String(err) || 'Failed to load recent orders'
+    }
   } finally {
     loading.value = false
   }
