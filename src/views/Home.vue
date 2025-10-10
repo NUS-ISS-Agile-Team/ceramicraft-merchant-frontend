@@ -61,7 +61,7 @@
     <div class="sales-section">
       <div class="section-header">
         <h2 class="section-title">Recent Sales</h2>
-        <button class="view-all-btn">View All</button>
+        <button class="view-all-btn" @click="() => { router.push({ name: 'Orders' }) }">View All</button>
       </div>
 
       <div v-if="errorMsg" class="error-message">{{ errorMsg }}</div>
@@ -71,37 +71,38 @@
       </div>
 
       <div v-else class="table-container">
-        <table class="sales-table">
+        <table class="orders-table">
           <thead>
             <tr>
-              <th>ORDER ID</th>
-              <th>CUSTOMER</th>
-              <th>DATE</th>
-              <th>AMOUNT</th>
-              <th>STATUS</th>
-              <th>ACTIONS</th>
+              <th>Order Number</th>
+              <th>Customer Info</th>
+              <th>Phone</th>
+              <th>Order Amount</th>
+              <th>Order Status</th>
+              <th>Create Time</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="sale in recentSales" :key="sale.id">
-              <td class="order-id">{{ sale.id }}</td>
+            <tr v-for="sale in recentSales" :key="sale.id" class="order-row">
+              <td class="order-no">{{ sale.id }}</td>
               <td>
-                <div class="customer-cell">
-                  <div class="cust-name">{{ sale.customer }}</div>
-                  <div class="cust-phone">{{ sale.phone }}</div>
+                <div class="buyer-info">
+                  <div class="buyer-name">{{ sale.customer }}</div>
                 </div>
               </td>
-              <td class="date">{{ sale.date }}</td>
+              <td>{{ sale.phone }}</td>
               <td class="amount">{{ sale.amount }}</td>
               <td>
-                <span :class="['status-badge', getStatusClass(sale.status)]">
+                <span :class="['status-badge', `status-${(sale.status||'unknown').toString().toLowerCase()}`]">
                   {{ sale.status || '—' }}
                 </span>
               </td>
+              <td>{{ sale.date }}</td>
               <td>
-                <button class="action-btn">
-                  <i class="fas fa-ellipsis-h"></i>
-                </button>
+                <div class="action-buttons">
+                  <button class="btn btn-secondary" @click="viewDetails(sale.id)">View Details</button>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -113,6 +114,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import type { OrderInfoInList } from '../services/order'
 
 interface Sale {
@@ -128,19 +130,11 @@ const recentSales = ref<Sale[]>([])
 const loading = ref(false)
 const errorMsg = ref('')
 
-const getStatusClass = (status: string) => {
-  if (!status) return ''
-  const s = String(status).toLowerCase()
+const router = useRouter()
 
-  if (s.includes('paid') || status === '已支付') return 'status-paid'
-  if (s.includes('shipped') || status === '已发货') return 'status-shipped'
-  if (s.includes('delivered') || status === '已送达') return 'status-shipped' // use shipped style for delivered
-  if (s.includes('cancel') || status === '已取消') return 'status-cancelled'
-
-  // fallback: if it's a chinese status we don't recognise, try some common words
-  if (status === '已确认') return 'status-paid'
-
-  return ''
+function viewDetails(id: string) {
+  // route defined as /orders/:id
+  router.push({ name: 'OrderDetail', params: { id } })
 }
 
 // Load recent orders from backend on mount
@@ -472,4 +466,55 @@ onMounted(async () => {
     min-width: 800px;
   }
 }
+
+/* copy orders-table styles from OrderList to keep consistent look */
+.orders-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.orders-table th,
+.orders-table td {
+  padding: 16px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.orders-table th {
+  background: #f9fafb;
+  font-weight: 600;
+  color: #374151;
+  font-size: 14px;
+}
+
+.orders-table td {
+  font-size: 14px;
+  color: #1f2937;
+}
+
+.status-created { background: #fef3c7; color: #92400e; }
+.status-paid { background: #dbeafe; color: #1e40af; }
+.status-shipped { background: #e0e7ff; color: #3730a3; }
+.status-delivered { background: #d1fae5; color: #065f46; }
+.status-confirmed { background: #dcfce7; color: #166534; }
+.status-cancelled { background: #fecaca; color: #991b1b; }
+.status-unknown { background: #f3f4f6; color: #374151; }
+
+.btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.btn-secondary {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.btn-secondary:hover { background: #e5e7eb }
 </style>
