@@ -1,137 +1,520 @@
 <template>
-  <!-- 首页内容 -->
-  <div class="home">
-    <div class="welcome-section">
-      <h1>Welcome to CeramicCraft</h1>
-      <p>Manage your ceramic products and inventory</p>
+  <div class="dashboard">
+    <h1 class="page-title">Dashboard</h1>
+
+    <!-- 统计卡片 -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-content">
+          <div class="stat-main">
+            <div class="stat-value">$24,987</div>
+            <div class="stat-label">Total Sales</div>
+          </div>
+          <div class="stat-change positive">
+            <i class="fas fa-arrow-up"></i>
+            12.5%
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-content">
+          <div class="stat-main">
+            <div class="stat-value">1,482</div>
+            <div class="stat-label">Total Orders</div>
+          </div>
+          <div class="stat-change positive">
+            <i class="fas fa-arrow-up"></i>
+            8.2%
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-content">
+          <div class="stat-main">
+            <div class="stat-value">$16.85</div>
+            <div class="stat-label">Average Order</div>
+          </div>
+          <div class="stat-change negative">
+            <i class="fas fa-arrow-down"></i>
+            2.4%
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-content">
+          <div class="stat-main">
+            <div class="stat-value">953</div>
+            <div class="stat-label">Total Customers</div>
+          </div>
+          <div class="stat-change positive">
+            <i class="fas fa-arrow-up"></i>
+            4.6%
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="quick-actions">
-      <h2>Quick Actions</h2>
-      <div class="action-grid">
-        <router-link to="/products" class="action-card">
-          <div class="action-icon">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-              <line x1="8" y1="21" x2="16" y2="21"></line>
-              <line x1="12" y1="17" x2="12" y2="21"></line>
-            </svg>
-          </div>
-          <h3>Products Management</h3>
-          <p>Manage your product inventory</p>
-        </router-link>
+    <!-- 最近销售表格 -->
+    <div class="sales-section">
+      <div class="section-header">
+        <h2 class="section-title">Recent Sales</h2>
+        <button class="view-all-btn" @click="() => { router.push({ name: 'Orders' }) }">View All</button>
+      </div>
 
-        <router-link to="/orders" class="action-card">
-          <div class="action-icon">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10"/>
-            </svg>
-          </div>
-          <h3>Order Management</h3>
-          <p>Manage customer orders</p>
-        </router-link>
+      <div v-if="errorMsg" class="error-message">{{ errorMsg }}</div>
+
+      <div v-if="loading" class="loading-spinner">
+        Loading...
+      </div>
+
+      <div v-else class="table-container">
+        <table class="orders-table">
+          <thead>
+            <tr>
+              <th>Order Number</th>
+              <th>Customer Info</th>
+              <th>Phone</th>
+              <th>Order Amount</th>
+              <th>Order Status</th>
+              <th>Create Time</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="sale in recentSales" :key="sale.id" class="order-row">
+              <td class="order-no">{{ sale.id }}</td>
+              <td>
+                <div class="buyer-info">
+                  <div class="buyer-name">{{ sale.customer }}</div>
+                </div>
+              </td>
+              <td>{{ sale.phone }}</td>
+              <td class="amount">{{ sale.amount }}</td>
+              <td>
+                <span :class="['status-badge', `status-${(sale.status||'unknown').toString().toLowerCase()}`]">
+                  {{ sale.status || '—' }}
+                </span>
+              </td>
+              <td>{{ sale.date }}</td>
+              <td>
+                <div class="action-buttons">
+                  <button class="btn btn-secondary" @click="viewDetails(sale.id)">View Details</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-/**
- * 首页组件
- * @description CeramicCraft 平台的客户端/商家端主页面
- */
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import type { OrderInfoInList } from '../services/order'
+
+interface Sale {
+  id: string
+  customer: string
+  date: string
+  amount: string
+  status: string
+  phone?: string
+}
+
+const recentSales = ref<Sale[]>([])
+const loading = ref(false)
+const errorMsg = ref('')
+
+const router = useRouter()
+
+function viewDetails(id: string) {
+  // route defined as /orders/:id
+  router.push({ name: 'OrderDetail', params: { id } })
+}
+
+// Load recent orders from backend on mount
+onMounted(async () => {
+  loading.value = true
+  errorMsg.value = ''
+  try {
+    const response = await fetch('/api/order-ms/v1/merchant/list', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ limit: 5, offset: 0 }),
+      credentials: 'include'
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    const resp = await response.json()
+    console.debug('Home getOrderList response:', resp)
+
+    if (resp && resp.data) {
+      const list = resp.data.orders || []
+
+      recentSales.value = list.map((o: OrderInfoInList) => {
+        const date = o.create_time ? new Date(o.create_time).toLocaleString() : '—'
+        const amount = typeof o.total_amount === 'number' ? `$${(o.total_amount / 100).toFixed(2)}` : '—'
+        const customerName = [o.receiver_first_name, o.receiver_last_name].filter(Boolean).join(' ') || '—'
+
+        return {
+          id: o.order_no || '—',
+          customer: customerName,
+          phone: o.receiver_phone || '—',
+          date,
+          amount,
+          status: o.status || '—'
+        }
+      })
+    } else {
+      console.warn('Unexpected response format:', resp)
+      errorMsg.value = '获取订单数据失败，请稍后重试'
+    }
+  } catch (err: unknown) {
+    console.error('Failed loading recent orders:', err)
+    if (err instanceof Error) {
+      errorMsg.value = err.message || 'Failed to load recent orders'
+    } else {
+      errorMsg.value = String(err) || 'Failed to load recent orders'
+    }
+  } finally {
+    loading.value = false
+  }
+})
 </script>
 
 <style scoped>
-.home {
+.dashboard {
   width: 100%;
-  padding: 40px 24px;
-  background: #f8f9fb;
+  padding: 24px 32px;
+  background: #f8f9fa;
   min-height: 100vh;
   box-sizing: border-box;
 }
 
-.welcome-section {
-  text-align: center;
-  margin-bottom: 48px;
-}
-
-.welcome-section h1 {
-  font-size: 32px;
+.page-title {
+  font-size: 28px;
   font-weight: 600;
-  color: #1e293b;
-  margin: 0 0 12px 0;
-}
-
-.welcome-section p {
-  font-size: 16px;
-  color: #64748b;
-  margin: 0;
-}
-
-.quick-actions h2 {
-  font-size: 24px;
-  font-weight: 600;
-  color: #1e293b;
+  color: #1a1a1a;
   margin: 0 0 24px 0;
-  text-align: center;
 }
 
-.action-grid {
+/* 统计卡片 */
+.stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 24px;
-  max-width: 900px;
-  margin: 0 auto;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-bottom: 32px;
 }
 
-.action-card {
+.stat-card {
   background: white;
-  border-radius: 12px;
-  padding: 32px 24px;
-  text-align: center;
-  text-decoration: none;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  transition: all 0.2s;
-  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 20px 24px;
+  border: 1px solid #e5e7eb;
 }
 
-.action-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  border-color: #dc6643;
+.stat-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
 }
 
-.action-icon {
-  color: #dc6643;
-  margin-bottom: 16px;
+.stat-main {
+  flex: 1;
 }
 
-.action-card h3 {
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 6px;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: #6b7280;
+  font-weight: 400;
+}
+
+.stat-change {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 0;
+}
+
+.stat-change.positive {
+  color: #10b981;
+}
+
+.stat-change.negative {
+  color: #ef4444;
+}
+
+.stat-change i {
+  font-size: 10px;
+}
+
+/* 销售部分 */
+.sales-section {
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.section-title {
   font-size: 18px;
   font-weight: 600;
-  color: #1e293b;
-  margin: 0 0 8px 0;
+  color: #1a1a1a;
+  margin: 0;
 }
 
-.action-card p {
+.view-all-btn {
+  background: none;
+  border: none;
+  color: #ea6844;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s;
+}
+
+.view-all-btn:hover {
+  color: #d9603d;
+}
+
+/* 表格 */
+.table-container {
+  overflow-x: auto;
+}
+
+.sales-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.sales-table thead {
+  background: #f9fafb;
+}
+
+.sales-table th {
+  padding: 12px 24px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.sales-table tbody tr {
+  border-bottom: 1px solid #f3f4f6;
+  transition: background-color 0.2s;
+}
+
+.sales-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+.sales-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.sales-table td {
+  padding: 16px 24px;
   font-size: 14px;
-  color: #64748b;
-  margin: 0;
+  color: #4b5563;
+}
+
+.order-id {
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.date {
+  color: #6b7280;
+}
+
+.amount {
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+/* 状态徽章 */
+.status-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status-paid {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.status-shipped {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.status-cancelled {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+/* 操作按钮 */
+.action-btn {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 14px;
+  transition: color 0.2s;
+}
+
+.action-btn:hover {
+  color: #4b5563;
+}
+
+/* 错误和加载状态 */
+.error-message {
+  color: #ef4444;
+  padding: 16px 24px;
+  background: #fee2e2;
+  border-radius: 4px;
+  margin: 12px 24px;
+  font-size: 14px;
+}
+
+.loading-spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 32px;
+  color: #6b7280;
+}
+
+/* 响应式设计 */
+@media (max-width: 1400px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (max-width: 768px) {
-  .home {
-    padding: 24px 16px;
+  .dashboard {
+    padding: 16px;
   }
 
-  .welcome-section h1 {
-    font-size: 28px;
+  .page-title {
+    font-size: 24px;
   }
 
-  .action-grid {
+  .stats-grid {
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: 12px;
+  }
+
+  .stat-card {
+    padding: 16px 20px;
+  }
+
+  .section-header {
+    padding: 16px 20px;
+  }
+
+  .sales-table th,
+  .sales-table td {
+    padding: 12px 16px;
+    font-size: 13px;
+  }
+
+  .stat-value {
+    font-size: 24px;
   }
 }
+
+@media (max-width: 640px) {
+  .table-container {
+    overflow-x: scroll;
+  }
+
+  .sales-table {
+    min-width: 800px;
+  }
+}
+
+/* copy orders-table styles from OrderList to keep consistent look */
+.orders-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.orders-table th,
+.orders-table td {
+  padding: 16px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.orders-table th {
+  background: #f9fafb;
+  font-weight: 600;
+  color: #374151;
+  font-size: 14px;
+}
+
+.orders-table td {
+  font-size: 14px;
+  color: #1f2937;
+}
+
+.status-created { background: #fef3c7; color: #92400e; }
+.status-paid { background: #dbeafe; color: #1e40af; }
+.status-shipped { background: #e0e7ff; color: #3730a3; }
+.status-delivered { background: #d1fae5; color: #065f46; }
+.status-confirmed { background: #dcfce7; color: #166534; }
+.status-cancelled { background: #fecaca; color: #991b1b; }
+.status-unknown { background: #f3f4f6; color: #374151; }
+
+.btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.btn-secondary {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.btn-secondary:hover { background: #e5e7eb }
 </style>

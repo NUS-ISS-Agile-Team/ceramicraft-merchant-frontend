@@ -10,7 +10,7 @@
       </div>
 
       <nav class="sidebar-nav">
-        <router-link to="/" class="nav-item" active-class="active">
+        <router-link to="/" class="nav-item" :class="{ active: $route.path === '/' }">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
             <polyline points="9,22 9,12 15,12 15,22" />
@@ -25,8 +25,15 @@
           <span>Products</span>
         </router-link>
         <router-link to="/orders" class="nav-item" active-class="active">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10"/>
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M3 7h18M3 12h18M3 17h18" />
           </svg>
           <span>Orders</span>
         </router-link>

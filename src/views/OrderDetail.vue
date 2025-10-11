@@ -1,335 +1,369 @@
 <template>
-  <div class="order-detail-page">
-    <!-- 页面顶部导航 -->
+  <div class="order-details">
+    <!-- Header -->
+    <div class="breadcrumb">
+      <a href="#" @click.prevent="goBack" class="breadcrumb-link">Orders</a>
+      <span class="breadcrumb-separator">›</span>
+      <span class="breadcrumb-current">Order Details</span>
+    </div>
+
     <div class="page-header">
-      <button @click="goBack" class="back-btn">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M19 12H5"/>
-          <path d="M12 19l-7-7 7-7"/>
-        </svg>
-        Back to Order List
-      </button>
-      <h1 class="page-title">Order Details</h1>
-    </div>
-
-    <!-- 加载状态 -->
-    <div v-if="loading" class="loading-state">
-      <div class="loading-spinner">
-        <svg class="loading-icon" viewBox="0 0 24 24">
-          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" opacity="0.25"/>
-          <path fill="currentColor" opacity="0.75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
-        </svg>
+      <div class="header-left">
+        <h1 class="page-title">
+          Order {{ orderData.orderId }}
+          <span :class="['status-badge', `status-${orderData.status.toLowerCase()}`]">
+            {{ orderData.status }}
+          </span>
+        </h1>
+        <p class="order-date">Placed on {{ orderData.placedDate }}</p>
       </div>
-      <p>Loading order details...</p>
-    </div>
 
-    <!-- 错误状态 -->
-    <div v-else-if="error" class="error-state">
-      <div class="error-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="15" y1="9" x2="9" y2="15"/>
-          <line x1="9" y1="9" x2="15" y2="15"/>
-        </svg>
+      <div class="header-actions">
+        <button class="btn btn-secondary" @click="goBack">
+          ← Back to Orders
+        </button>
+        <button class="btn btn-secondary" @click="printOrder">
+          🖨️ Print
+        </button>
+        <button class="btn btn-secondary" @click="generateInvoice">
+          📄 Generate Invoice
+        </button>
       </div>
-      <p class="error-message">{{ error }}</p>
-      <button @click="loadOrderDetail" class="btn-primary">Reload</button>
     </div>
 
-    <!-- 订单详情内容 -->
-    <div v-else-if="orderDetail" class="order-content">
-      <!-- 第一行：订单基本信息 + 收货信息 -->
-      <div class="panel-row">
-        <!-- 订单基本信息面板 -->
-        <div class="info-panel">
-          <div class="panel-header">
-            <h2>Order Information</h2>
-            <div class="order-status">
-              <span :class="['status-badge', OrderAPI.getStatusClass(orderDetail.status_name)]">
-                {{ OrderAPI.getStatusName(orderDetail.status_name) }}
+    <div class="content-grid">
+      <!-- Left Column -->
+      <div class="left-column">
+        <!-- Order Summary -->
+        <div class="card">
+          <h2 class="card-title">Order Summary</h2>
+          <div class="info-grid">
+            <div class="info-row">
+              <span class="info-label">Order ID</span>
+              <span class="info-value">{{ orderData.orderId }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Date Placed</span>
+              <span class="info-value">{{ orderData.datePlaced }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Time</span>
+              <span class="info-value">{{ orderData.time }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Status</span>
+              <span :class="['status-badge', `status-${orderData.status.toLowerCase()}`]">
+                {{ orderData.status }}
               </span>
             </div>
-          </div>
-
-          <div class="info-grid">
-            <div class="info-item">
-              <label>Order Number</label>
-              <span class="order-no">{{ orderDetail.order_no }}</span>
+            <div class="info-row">
+              <span class="info-label">Payment Method</span>
+              <span class="info-value">{{ orderData.paymentMethod }}</span>
             </div>
-            <div class="info-item">
-              <label>Customer ID</label>
-              <span>{{ orderDetail.user_id }}</span>
-            </div>
-            <div class="info-item">
-              <label>Create Time</label>
-              <span>{{ OrderAPI.formatDate(orderDetail.create_time) }}</span>
-            </div>
-            <div class="info-item">
-              <label>Payment Time</label>
-              <span>{{ OrderAPI.formatDate(orderDetail.pay_time) }}</span>
-            </div>
-            <div class="info-item">
-              <label>Delivery Time</label>
-              <span>{{ OrderAPI.formatDate(orderDetail.delivery_time) }}</span>
-            </div>
-            <div class="info-item">
-              <label>Tracking Number</label>
-              <span>{{ orderDetail.logistics_no || '-' }}</span>
-            </div>
-            <div class="info-item full-width">
-              <label>Remark</label>
-              <span>{{ orderDetail.remark || 'None' }}</span>
+            <div class="info-row">
+              <span class="info-label">Shipping Method</span>
+              <span class="info-value">{{ orderData.shippingMethod }}</span>
             </div>
           </div>
         </div>
 
-        <!-- 收货信息面板 -->
-        <div class="info-panel">
-          <div class="panel-header">
-            <h2>Shipping Information</h2>
+        <!-- Customer Information -->
+        <div class="card">
+          <h2 class="card-title">Customer Information</h2>
+          
+          <div class="customer-section">
+            <h3 class="section-title">Contact Information</h3>
+            <p class="customer-name">{{ customer.name }}</p>
+            <p class="customer-detail">{{ customer.email }}</p>
+            <p class="customer-detail">{{ customer.phone }}</p>
           </div>
 
-          <div class="info-grid">
-            <div class="info-item">
-              <label>Receiver</label>
-              <span>{{ orderDetail.receiver_last_name }}{{ orderDetail.receiver_first_name }}</span>
-            </div>
-            <div class="info-item">
-              <label>Phone</label>
-              <span>{{ orderDetail.receiver_phone }}</span>
-            </div>
-            <div class="info-item">
-              <label>Country/Region</label>
-              <span>{{ orderDetail.receiver_country }}</span>
-            </div>
-            <div class="info-item">
-              <label>Postal Code</label>
-              <span>{{ orderDetail.receiver_zip_code }}</span>
-            </div>
-            <div class="info-item full-width">
-              <label>Address</label>
-              <span>{{ orderDetail.receiver_address }}</span>
-            </div>
+          <div class="customer-section">
+            <h3 class="section-title">Shipping Address</h3>
+            <p class="customer-name">{{ shipping.name }}</p>
+            <p class="customer-detail">{{ shipping.street }}</p>
+            <p class="customer-detail">{{ shipping.apt }}</p>
+            <p class="customer-detail">{{ shipping.city }}</p>
+            <p class="customer-detail">{{ shipping.country }}</p>
+          </div>
+
+          <div class="customer-section">
+            <h3 class="section-title">Billing Address</h3>
+            <p class="customer-detail">{{ billing.sameAsShipping }}</p>
           </div>
         </div>
       </div>
 
-      <!-- 第二行：订单商品 + 订单金额 -->
-      <div class="panel-row">
-        <!-- 订单商品表格 -->
-        <div class="items-panel">
-          <div class="panel-header">
-            <h2>Order Items</h2>
-            <span class="items-count">{{ orderDetail.order_items.length }} items total</span>
+      <!-- Right Column -->
+      <div class="right-column">
+        <!-- Order Items -->
+        <div class="card">
+          <h2 class="card-title">Order Items</h2>
+          
+          <div class="items-table">
+            <div class="table-header">
+              <div class="col-product">PRODUCT</div>
+              <div class="col-id">ID</div>
+              <div class="col-price">UNIT PRICE</div>
+              <div class="col-quantity">QUANTITY</div>
+              <div class="col-total">TOTAL</div>
+            </div>
+
+            <div 
+              v-for="item in orderItems" 
+              :key="item.id" 
+              class="table-row"
+            >
+              <div class="col-product">
+                <div class="product-info">
+                  <img :src="item.image" :alt="item.name" class="product-image">
+                  <span class="product-name">{{ item.name }}</span>
+                </div>
+              </div>
+              <div class="col-id">{{ item.productId }}</div>
+              <div class="col-price">{{ item.price }}</div>
+              <div class="col-quantity">{{ item.quantity }}</div>
+              <div class="col-total">{{ item.total }}</div>
+            </div>
           </div>
 
-          <div class="items-table-container">
-            <table class="items-table">
-              <thead>
-                <tr>
-                  <th>Product ID</th>
-                  <th>Product Name</th>
-                  <th>Price</th>
-                  <th>Qty</th>
-                  <th>Subtotal</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="item in orderDetail.order_items" :key="item.id" class="item-row">
-                  <td class="product-id">{{ item.product_id }}</td>
-                  <td class="product-name">{{ item.product_name }}</td>
-                  <td class="price">¥{{ OrderAPI.formatAmount(item.price) }}</td>
-                  <td class="quantity">{{ item.quantity }}</td>
-                  <td class="total-price">¥{{ OrderAPI.formatAmount(item.total_price) }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- 订单金额汇总 -->
-        <div class="summary-panel">
-          <div class="panel-header">
-            <h2>Order Amount</h2>
-          </div>
-
-          <div class="summary-grid">
-            <div class="summary-row">
-              <span class="summary-label">Items Total</span>
-              <span class="summary-value">¥{{ OrderAPI.formatAmount(getItemsTotal()) }}</span>
+          <div class="order-totals">
+            <div class="total-row">
+              <span class="total-label">Subtotal</span>
+              <span class="total-value">{{ totals.subtotal }}</span>
             </div>
-            <div class="summary-row">
-              <span class="summary-label">Shipping Fee</span>
-              <span class="summary-value">¥{{ OrderAPI.formatAmount(orderDetail.shipping_fee) }}</span>
+            <div class="total-row">
+              <span class="total-label">Shipping</span>
+              <span class="total-value">{{ totals.shipping }}</span>
             </div>
-            <div class="summary-row">
-              <span class="summary-label">Tax</span>
-              <span class="summary-value">¥{{ OrderAPI.formatAmount(orderDetail.tax) }}</span>
+            <div class="total-row">
+              <span class="total-label">Tax</span>
+              <span class="total-value">{{ totals.tax }}</span>
             </div>
-            <div class="summary-row total">
-              <span class="summary-label">Order Total</span>
-              <span class="summary-value">¥{{ OrderAPI.formatAmount(orderDetail.total_amount) }}</span>
-            </div>
-            <div v-if="orderDetail.pay_amount > 0" class="summary-row">
-              <span class="summary-label">Amount Paid</span>
-              <span class="summary-value paid">¥{{ OrderAPI.formatAmount(orderDetail.pay_amount) }}</span>
+            <div class="total-row total-final">
+              <span class="total-label">Total</span>
+              <span class="total-value">{{ totals.total }}</span>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- 状态时间线 -->
-      <div v-if="orderDetail.status_logs && orderDetail.status_logs.length > 0" class="timeline-panel">
-        <div class="panel-header">
-          <h2>Status History</h2>
-        </div>
-
-        <div class="timeline-container">
-          <div v-for="(log, index) in orderDetail.status_logs" :key="log.id" class="timeline-item">
-            <div class="timeline-marker">
-              <div class="timeline-dot"></div>
-              <div v-if="index < orderDetail.status_logs.length - 1" class="timeline-line"></div>
-            </div>
-            <div class="timeline-content">
-              <div class="timeline-status">{{ log.status_name }}</div>
-              <div class="timeline-time">{{ OrderAPI.formatDate(log.create_time) }}</div>
-              <div v-if="log.remark" class="timeline-remark">{{ log.remark }}</div>
+        <!-- Order Timeline -->
+        <div class="card">
+          <h2 class="card-title">Order Timeline</h2>
+          
+          <div class="timeline">
+            <div 
+              v-for="(event, index) in timeline" 
+              :key="index" 
+              class="timeline-item"
+            >
+              <div :class="['timeline-icon', `icon-${event.type}`]">
+                <span>{{ event.icon }}</span>
+              </div>
+              <div class="timeline-content">
+                <div class="timeline-header">
+                  <h4 class="timeline-title">{{ event.title }}</h4>
+                  <span class="timeline-date">
+                    {{ event.date }}<br>{{ event.time }}
+                  </span>
+                </div>
+                <p class="timeline-description">{{ event.description }}</p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- 操作按钮区域 -->
-      <div class="actions-panel">
-        <div class="actions-grid">
-          <button 
-            v-if="canUpdateStatus" 
-            @click="showUpdateStatusDialog = true" 
-            class="btn-primary"
-          >
-            Update Order Status
-          </button>
-          <button @click="printOrder" class="btn-secondary">
-            Print Order
-          </button>
-          <button @click="exportOrder" class="btn-secondary">
-            Export Order
+        <!-- Order Notes -->
+        <div class="card">
+          <h2 class="card-title">Order Notes</h2>
+          
+          <textarea 
+            v-model="orderNotes"
+            class="notes-textarea"
+            placeholder="Add a note about this order..."
+          ></textarea>
+          
+          <button class="btn btn-primary add-note-btn" @click="addNote">
+            Add Note
           </button>
         </div>
       </div>
+    </div>
+
+    <!-- Footer Actions -->
+    <div class="footer-actions">
+      <button class="btn btn-secondary" @click="cancelOrder">
+        Cancel Order
+      </button>
+      <button class="btn btn-primary" @click="shipOrder">
+        Ship Order
+      </button>
     </div>
   </div>
 </template>
 
-<script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { OrderAPI, OrderStatus, type OrderDetail } from '../services/order'
-
-const router = useRouter()
-const route = useRoute()
-
-// 响应式数据
-const loading = ref(false)
-const error = ref('')
-const orderDetail = ref<OrderDetail | null>(null)
-const showUpdateStatusDialog = ref(false)
-
-// 计算属性
-const canUpdateStatus = computed(() => {
-  if (!orderDetail.value) return false
-  // 根据当前状态判断是否可以更新状态
-  const currentStatus = orderDetail.value.status
-  return currentStatus !== OrderStatus.CONFIRMED && currentStatus !== OrderStatus.CANCELLED
-})
-
-// 方法
-const loadOrderDetail = async () => {
-  const orderNo = route.params.orderNo as string
-  if (!orderNo) {
-    error.value = 'Invalid order number parameter'
-    return
-  }
-
-  try {
-    loading.value = true
-    error.value = ''
-
-    const response = await OrderAPI.getOrderDetail(orderNo)
-
-    if (OrderAPI.isSuccess(response) && response.data) {
-      orderDetail.value = response.data
-    } else {
-      throw new Error(response.error || 'Failed to fetch order details')
+<script>
+export default {
+  name: 'OrderDetails',
+  data() {
+    return {
+      orderNotes: '',
+      orderData: {
+        orderId: '#ORD-12345',
+        status: 'Paid',
+        placedDate: 'May 21, 2023 at 14:32 PM',
+        datePlaced: 'May 21, 2023',
+        time: '14:32 PM',
+        paymentMethod: 'Point Card',
+        shippingMethod: 'Standard Shipping'
+      },
+      customer: {
+        name: 'John Smith',
+        email: 'john.smith@example.com',
+        phone: '+1 (555) 123-4567'
+      },
+      shipping: {
+        name: 'John Smith',
+        street: '123 Main Street',
+        apt: 'Apt 4B',
+        city: 'San Francisco, CA 94103',
+        country: 'United States'
+      },
+      billing: {
+        sameAsShipping: 'Same as shipping address'
+      },
+      orderItems: [
+        {
+          id: 1,
+          name: 'Handcrafted Ceramic Mug',
+          productId: 'CM-1001',
+          price: '$29.99',
+          quantity: 3,
+          total: '$89.97',
+          image: 'data:image/svg+xml,%3Csvg width="48" height="48" xmlns="http://www.w3.org/2000/svg"%3E%3Crect fill="%23E5E7EB" width="48" height="48"/%3E%3C/svg%3E'
+        },
+        {
+          id: 2,
+          name: 'Ceramic Plant Pot',
+          productId: 'CP-2002',
+          price: '$45.99',
+          quantity: 2,
+          total: '$91.98',
+          image: 'data:image/svg+xml,%3Csvg width="48" height="48" xmlns="http://www.w3.org/2000/svg"%3E%3Crect fill="%23D1FAE5" width="48" height="48"/%3E%3C/svg%3E'
+        },
+        {
+          id: 3,
+          name: 'Decorative Ceramic Plate',
+          productId: 'DP-3003',
+          price: '$32.99',
+          quantity: 1,
+          total: '$32.99',
+          image: 'data:image/svg+xml,%3Csvg width="48" height="48" xmlns="http://www.w3.org/2000/svg"%3E%3Crect fill="%23FED7AA" width="48" height="48"/%3E%3C/svg%3E'
+        }
+      ],
+      totals: {
+        subtotal: '$214.94',
+        shipping: '$9.99',
+        tax: '$21.06',
+        total: '$245.99'
+      },
+      timeline: [
+        {
+          type: 'placed',
+          icon: '📦',
+          title: 'Order Placed',
+          description: 'Order #ORD-12345 was placed by customer',
+          date: 'May 21, 2023',
+          time: '14:32 PM'
+        },
+        {
+          type: 'confirmed',
+          icon: '💳',
+          title: 'Payment Confirmed',
+          description: 'Payment of $245.99 was received via Point Card',
+          date: 'May 21, 2023',
+          time: '14:35 PM'
+        },
+        {
+          type: 'processing',
+          icon: '⚙️',
+          title: 'Processing Order',
+          description: 'Order is being prepared for shipment',
+          date: 'May 21, 2023',
+          time: '15:20 PM'
+        }
+      ]
+    };
+  },
+  methods: {
+    goBack() {
+      this.$router.push('/orders');
+    },
+    printOrder() {
+      window.print();
+    },
+    generateInvoice() {
+      console.log('Generating invoice...');
+    },
+    addNote() {
+      if (this.orderNotes.trim()) {
+        console.log('Adding note:', this.orderNotes);
+        this.orderNotes = '';
+      }
+    },
+    cancelOrder() {
+      console.log('Cancelling order...');
+    },
+    shipOrder() {
+      console.log('Shipping order...');
     }
-  } catch (err) {
-    console.error('Failed to load order detail:', err)
-    error.value = err instanceof Error ? err.message : 'Network error, please try again later'
-  } finally {
-    loading.value = false
   }
-}
-
-const getItemsTotal = (): number => {
-  if (!orderDetail.value) return 0
-  return orderDetail.value.order_items.reduce((total, item) => total + item.total_price, 0)
-}
-
-const goBack = () => {
-  router.push('/orders')
-}
-
-const printOrder = () => {
-  window.print()
-}
-
-const exportOrder = () => {
-  // 这里可以实现导出功能
-  console.log('Export order:', orderDetail.value?.order_no)
-}
-
-// 生命周期
-onMounted(() => {
-  loadOrderDetail()
-})
+};
 </script>
 
 <style scoped>
-.order-detail-page {
+.order-details {
   padding: 24px;
-  max-width: 1200px;
-  margin: 0 auto;
+  background-color: #f5f5f5;
+  min-height: 100vh;
 }
 
-/* 页面头部 */
-.page-header {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 32px;
-}
-
-.back-btn {
+.breadcrumb {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 16px;
-  background: #f3f4f6;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  color: #374151;
-  cursor: pointer;
+  margin-bottom: 16px;
   font-size: 14px;
-  transition: all 0.2s;
 }
 
-.back-btn:hover {
-  background: #e5e7eb;
+.breadcrumb-link {
+  color: #666;
+  text-decoration: none;
 }
 
-.back-btn svg {
-  width: 16px;
-  height: 16px;
+.breadcrumb-link:hover {
+  color: #dc6b3d;
+}
+
+.breadcrumb-separator {
+  color: #999;
+}
+
+.breadcrumb-current {
+  color: #1a1a1a;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .page-title {
@@ -337,405 +371,347 @@ onMounted(() => {
   font-weight: 600;
   color: #1a1a1a;
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-/* 状态样式 */
-.loading-state, .error-state {
-  padding: 64px 24px;
+.order-date {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 6px 18px;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 600;
+  min-width: 76px;
   text-align: center;
+  line-height: 1;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.03);
+  border: 1px solid rgba(15, 23, 42, 0.03);
 }
 
-.loading-spinner, .error-icon {
-  width: 48px;
-  height: 48px;
-  margin: 0 auto 16px;
-  color: #9ca3af;
+.status-paid {
+  background: #fff8e6;
+  color: #b45309;
+  border-color: rgba(180,83,9,0.08);
 }
 
-.loading-icon {
-  width: 48px;
-  height: 48px;
-  animation: spin 1s linear infinite;
+.status-shipped {
+  background: #e9fbf1;
+  color: #059669;
+  border-color: rgba(5,150,105,0.06);
 }
 
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+.status-cancelled {
+  background: #fff1f2;
+  color: #b91c1c;
+  border-color: rgba(185,28,28,0.06);
 }
 
-.error-message {
-  color: #dc2626;
-  font-size: 16px;
-  margin-bottom: 16px;
-}
-
-/* 面板样式 */
-.panel-row {
+.content-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 380px 1fr;
   gap: 24px;
   margin-bottom: 24px;
 }
 
-.info-panel, .items-panel, .summary-panel, .timeline-panel, .actions-panel {
+.card {
   background: white;
-  border-radius: 12px;
+  border-radius: 8px;
   padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* 让商品面板占用更多空间 */
-.panel-row .items-panel {
-  grid-column: 1;
-}
-
-.panel-row .summary-panel {
-  grid-column: 2;
-}
-
-/* 单独的面板（状态历史和操作按钮） */
-.timeline-panel, .actions-panel {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   margin-bottom: 24px;
 }
 
-.panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #e5e7eb;
+.card:last-child {
+  margin-bottom: 0;
 }
 
-.panel-header h2 {
-  font-size: 20px;
+.card-title {
+  font-size: 18px;
   font-weight: 600;
-  color: #1f2937;
-  margin: 0;
+  color: #1a1a1a;
+  margin: 0 0 20px 0;
 }
 
-.order-status {
-  display: flex;
-  align-items: center;
-}
-
-.status-badge {
-  padding: 6px 16px;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.status-created { background: #fef3c7; color: #92400e; }
-.status-paid { background: #dbeafe; color: #1e40af; }
-.status-shipped { background: #e0e7ff; color: #3730a3; }
-.status-delivered { background: #d1fae5; color: #065f46; }
-.status-confirmed { background: #dcfce7; color: #166534; }
-.status-cancelled { background: #fecaca; color: #991b1b; }
-.status-unknown { background: #f3f4f6; color: #374151; }
-
-/* 信息网格 */
 .info-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 16px;
 }
 
-.info-item {
+.info-row {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.info-item.full-width {
-  grid-column: 1 / -1;
-}
-
-.info-item label {
+.info-label {
   font-size: 14px;
-  font-weight: 500;
-  color: #6b7280;
+  color: #666;
 }
 
-.info-item span {
-  font-size: 16px;
-  color: #1f2937;
-}
-
-.order-no {
-  font-family: monospace;
-  color: #3b82f6;
+.info-value {
+  font-size: 14px;
+  color: #1a1a1a;
   font-weight: 500;
 }
 
-/* 商品表格 */
-.items-count {
-  font-size: 14px;
-  color: #6b7280;
+.customer-section {
+  margin-bottom: 24px;
 }
 
-.items-table-container {
-  overflow-x: auto;
+.customer-section:last-child {
+  margin-bottom: 0;
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 12px 0;
+}
+
+.customer-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1a1a1a;
+  margin: 0 0 4px 0;
+}
+
+.customer-detail {
+  font-size: 14px;
+  color: #666;
+  margin: 0 0 4px 0;
 }
 
 .items-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
+  margin-bottom: 24px;
 }
 
-.items-table th,
-.items-table td {
-  padding: 10px 8px;
-  text-align: left;
-  border-bottom: 1px solid #e5e7eb;
+.table-header,
+.table-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+  gap: 16px;
+  padding: 12px 0;
 }
 
-.items-table th {
-  background: #f9fafb;
-  font-weight: 600;
-  color: #374151;
+.table-header {
+  border-bottom: 2px solid #f0f0f0;
   font-size: 12px;
-  white-space: nowrap;
-}
-
-.items-table td {
-  font-size: 13px;
-  color: #1f2937;
-}
-
-.item-row:hover {
-  background: #f9fafb;
-}
-
-.product-id {
-  font-family: monospace;
-  color: #3b82f6;
-  font-size: 12px;
-}
-
-.product-name {
-  max-width: 120px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.price, .total-price {
   font-weight: 600;
-  color: #059669;
-  white-space: nowrap;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.quantity {
-  text-align: center;
+.table-row {
+  border-bottom: 1px solid #f5f5f5;
+  align-items: center;
 }
 
-/* 金额汇总 */
-.summary-grid {
+.product-info {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 12px;
 }
 
-.summary-row {
+.product-image {
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.product-name {
+  font-size: 14px;
+  color: #1a1a1a;
+  font-weight: 500;
+}
+
+.col-id,
+.col-price,
+.col-quantity,
+.col-total {
+  font-size: 14px;
+  color: #1a1a1a;
+}
+
+.order-totals {
+  border-top: 2px solid #f0f0f0;
+  padding-top: 16px;
+}
+
+.total-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 8px 0;
 }
 
-.summary-row.total {
-  border-top: 2px solid #e5e7eb;
-  margin-top: 8px;
-  padding-top: 16px;
-  font-weight: 600;
-  font-size: 16px;
+.total-label {
+  font-size: 14px;
+  color: #666;
 }
 
-.summary-label {
-  color: #6b7280;
-}
-
-.summary-value {
-  color: #1f2937;
+.total-value {
+  font-size: 14px;
+  color: #1a1a1a;
   font-weight: 500;
 }
 
-.summary-value.paid {
-  color: #059669;
-  font-weight: 600;
+.total-final {
+  border-top: 2px solid #f0f0f0;
+  margin-top: 8px;
+  padding-top: 16px;
 }
 
-/* 时间线 */
-.timeline-container {
+.total-final .total-label,
+.total-final .total-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.timeline {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
 }
 
 .timeline-item {
   display: flex;
   gap: 16px;
-  position: relative;
 }
 
-.timeline-marker {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  position: relative;
-}
-
-.timeline-dot {
-  width: 12px;
-  height: 12px;
-  background: #3b82f6;
-  border-radius: 50%;
-  border: 3px solid white;
-  box-shadow: 0 0 0 2px #3b82f6;
-}
-
-.timeline-line {
-  width: 2px;
+.timeline-icon {
+  width: 40px;
   height: 40px;
-  background: #e5e7eb;
-  margin-top: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.icon-placed {
+  background-color: #dbeafe;
+}
+
+.icon-confirmed {
+  background-color: #d1fae5;
+}
+
+.icon-processing {
+  background-color: #fef3c7;
 }
 
 .timeline-content {
   flex: 1;
-  padding-bottom: 16px;
 }
 
-.timeline-status {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1f2937;
+.timeline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   margin-bottom: 4px;
 }
 
-.timeline-time {
+.timeline-title {
   font-size: 14px;
-  color: #6b7280;
-  margin-bottom: 8px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
 }
 
-.timeline-remark {
+.timeline-date {
+  font-size: 12px;
+  color: #666;
+  text-align: right;
+  line-height: 1.4;
+}
+
+.timeline-description {
   font-size: 14px;
-  color: #374151;
-  background: #f9fafb;
-  padding: 8px 12px;
+  color: #666;
+  margin: 0;
+}
+
+.notes-textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 12px;
+  border: 1px solid #e0e0e0;
   border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  margin-bottom: 12px;
 }
 
-/* 操作按钮 */
-.actions-grid {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
+.notes-textarea:focus {
+  outline: none;
+  border-color: #dc6b3d;
 }
 
-.btn-primary, .btn-secondary {
-  padding: 12px 24px;
-  border: none;
-  border-radius: 8px;
+.add-note-btn {
+  width: 100%;
+}
+
+.btn {
+  padding: 10px 20px;
+  border-radius: 6px;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
+  border: none;
   transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-secondary {
+  background: white;
+  border: 1px solid #e0e0e0;
+  color: #1a1a1a;
+}
+
+.btn-secondary:hover {
+  background: #f5f5f5;
 }
 
 .btn-primary {
-  background: #dc6643;
+  background: #dc6b3d;
   color: white;
 }
 
 .btn-primary:hover {
-  background: #c55a3a;
+  background: #c55a2f;
 }
 
-.btn-secondary {
-  background: #f3f4f6;
-  color: #374151;
-  border: 1px solid #d1d5db;
+.footer-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 24px;
 }
 
-.btn-secondary:hover {
-  background: #e5e7eb;
-}
-
-/* 响应式样式 */
-@media (max-width: 1024px) {
-  .panel-row {
+@media (max-width: 1200px) {
+  .content-grid {
     grid-template-columns: 1fr;
-    gap: 16px;
-  }
-  
-  .panel-row .items-panel,
-  .panel-row .summary-panel {
-    grid-column: 1;
   }
 }
-
-@media (max-width: 768px) {
-  .order-detail-page {
-    padding: 16px;
-  }
-  
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-  
-  .panel-row {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-  
-  .info-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-  
-  .items-table {
-    font-size: 12px;
-  }
-  
-  .items-table th,
-  .items-table td {
-    padding: 8px 6px;
-  }
-  
-  .product-name {
-    max-width: 100px;
-  }
-  
-  .actions-grid {
-    flex-direction: column;
-  }
-  
-  .btn-primary, .btn-secondary {
-    width: 100%;
-    justify-content: center;
-  }
-}
-
-/* 打印样式 */
-@media print {
-  .page-header,
-  .actions-panel {
-    display: none;
-  }
-  
-  .order-detail-page {
-    padding: 0;
-  }
-  
-  .info-panel, .items-panel, .summary-panel, .timeline-panel {
-    box-shadow: none;
-    border: 1px solid #e5e7eb;
-    margin-bottom: 16px;
-  }
-}</style>
+</style>
