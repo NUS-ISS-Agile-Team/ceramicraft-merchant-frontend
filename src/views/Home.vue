@@ -494,7 +494,7 @@ onMounted(async () => {
 
 .status-created { background: #fef3c7; color: #92400e; }
 .status-paid { background: #dbeafe; color: #1e40af; }
-.status-shipped { background: #e0e7ff; color: #3730a3; }
+.status-shipped { background: #fce7f3; color: #ec4899; }
 .status-delivered { background: #d1fae5; color: #065f46; }
 .status-confirmed { background: #dcfce7; color: #166534; }
 .status-cancelled { background: #fecaca; color: #991b1b; }
