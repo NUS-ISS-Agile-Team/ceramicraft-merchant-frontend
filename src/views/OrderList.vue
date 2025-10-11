@@ -1,339 +1,491 @@
 <template>
-  <div class="order-management">
-    <!-- Header -->
-    <div class="header">
-      <h1 class="title">Order Management</h1>
-      <p class="subtitle">View and manage your store orders</p>
+  <div class="order-list-page">
+    <!-- 页面标题 -->
+    <div class="page-header">
+      <h1 class="page-title">Order Management</h1>
+      <p class="page-subtitle">View and manage all orders</p>
     </div>
 
-    <!-- Filters -->
-    <div class="filters">
-      <div class="filter-group">
-        <div class="filter-item">
-          <label>Status:</label>
-          <select v-model="filters.status" class="select">
-            <option value="all">all</option>
-            <option value="paid">Paid</option>
-            <option value="shipped">Shipped</option>
-            <option value="cancelled">Cancelled</option>
+    <!-- 过滤器区域 -->
+    <div class="filters-section">
+      <div class="filters-row">
+        <div class="filter-group">
+          <label>Order Number</label>
+          <input 
+            v-model="filters.orderNo" 
+            type="text" 
+            placeholder="Enter order number"
+            class="filter-input"
+            @keyup.enter="handleSearch"
+          />
+        </div>
+        
+        <div class="filter-group">
+          <label>Order Status</label>
+          <select v-model="filters.orderStatus" class="filter-select">
+            <option value="">All Status</option>
+            <option value="1">Created</option>
+            <option value="2">Paid</option>
+            <option value="3">Shipped</option>
+            <option value="4">Delivered</option>
+            <option value="5">Confirmed</option>
+            <option value="6">Cancelled</option>
           </select>
         </div>
 
-        <div class="filter-item">
-          <button class="date-range-btn">
-            <span class="icon">📅</span>
-            Date Range
-          </button>
+        <div class="filter-group">
+          <label>Customer ID</label>
+          <input 
+            v-model="filters.userId" 
+            type="number" 
+            placeholder="Enter customer ID"
+            class="filter-input"
+            @keyup.enter="handleSearch"
+          />
+        </div>
+
+        <div class="filter-group date-filter-group">
+          <label>Create Time</label>
+          <div class="date-range">
+            <input 
+              v-model="filters.startTime" 
+              type="datetime-local" 
+              class="filter-input date-input"
+              placeholder="Start time"
+              lang="en-US"
+            />
+            <span class="date-separator">to</span>
+            <input 
+              v-model="filters.endTime" 
+              type="datetime-local" 
+              class="filter-input date-input"
+              placeholder="End time"
+              lang="en-US"
+            />
+          </div>
         </div>
       </div>
 
-      <button class="more-filters-btn">
-        <span class="icon">⚙</span>
-        More Filters
-      </button>
+      <div class="filters-actions">
+        <button @click="handleSearch" class="btn-primary" :disabled="loading">
+          <svg v-if="loading" class="loading-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" opacity="0.25"/>
+            <path fill="currentColor" opacity="0.75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+          </svg>
+          {{ loading ? 'Searching...' : 'Search' }}
+        </button>
+        <button @click="handleReset" class="btn-secondary">Reset</button>
+      </div>
     </div>
 
-    <!-- Orders Table -->
-    <div class="table-container">
-      <table class="orders-table">
-        <thead>
-          <tr>
-            <th>ORDER ID</th>
-            <th>BUYER</th>
-            <th>DATE</th>
-            <th>AMOUNT</th>
-            <th>STATUS</th>
-            <th>ACTIONS</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="order in paginatedOrders" :key="order.id">
-            <td class="order-id">{{ order.id }}</td>
-            <td>
-              <div class="buyer-info">
-                <div class="buyer-name">{{ order.buyer.name }}</div>
-                <div class="buyer-email">{{ order.buyer.email }}</div>
-              </div>
-            </td>
-            <td>{{ order.date }}</td>
-            <td class="amount">{{ order.amount }}</td>
-            <td>
-              <span :class="['status-badge', `status-${order.status.toLowerCase()}`]">
-                {{ order.status }}
-              </span>
-            </td>
-            <td>
-              <div class="action-buttons">
-                <button class="btn btn-secondary" @click="viewDetails(order.id)">
-                  View Details
-                </button>
-                <button 
-                  v-if="order.status === 'Paid'" 
-                  class="btn btn-primary" 
-                  @click="shipOrder(order.id)"
-                >
-                  Ship Order
-                </button>
-                <button 
-                  v-if="order.status === 'Paid'" 
-                  class="btn btn-danger" 
-                  @click="cancelOrder(order.id)"
-                >
-                  Cancel Order
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Footer -->
-    <div class="footer">
-      <div class="results-info">
-        Showing {{ startIndex }} to {{ endIndex }} of {{ totalResults }} results
+    <!-- 订单表格 -->
+    <div class="table-section">
+      <!-- 加载状态 -->
+      <div v-if="loading" class="loading-state">
+        <div class="loading-spinner">
+          <svg class="loading-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" opacity="0.25"/>
+            <path fill="currentColor" opacity="0.75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+          </svg>
+        </div>
+        <p>Loading...</p>
       </div>
 
-      <div class="pagination">
+      <!-- 错误状态 -->
+      <div v-else-if="error" class="error-state">
+        <div class="error-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="15" y1="9" x2="9" y2="15"/>
+            <line x1="9" y1="9" x2="15" y2="15"/>
+          </svg>
+        </div>
+        <p class="error-message">{{ error }}</p>
+        <button @click="loadOrders" class="btn-primary">Retry</button>
+      </div>
+
+      <!-- 空状态 -->
+      <div v-else-if="orders.length === 0" class="empty-state">
+        <div class="empty-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10"/>
+          </svg>
+        </div>
+        <p class="empty-message">No order data</p>
+        <p class="empty-description">
+          {{ hasActiveFilters ? 'Please try adjusting search criteria' : 'No orders in the system yet' }}
+        </p>
+      </div>
+
+      <!-- 订单表格 -->
+      <div v-else class="table-container">
+        <table class="orders-table">
+          <thead>
+            <tr>
+              <th>Order Number</th>
+              <th>Customer Info</th>
+              <th>Phone</th>
+              <th>Order Amount</th>
+              <th>Order Status</th>
+              <th>Create Time</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="order in orders" :key="order.order_no" class="order-row">
+              <td class="order-no">{{ order.order_no }}</td>
+              <td class="customer-info">
+                {{ order.receiver_last_name }}{{ order.receiver_first_name }}
+              </td>
+              <td class="phone">{{ order.receiver_phone }}</td>
+              <td class="amount">${{ OrderAPI.formatAmount(order.total_amount) }}</td>
+              <td class="status">
+                <span :class="['status-badge', OrderAPI.getStatusClass(order.status)]">
+                  {{ OrderAPI.getStatusName(order.status) }}
+                </span>
+              </td>
+              <td class="create-time">{{ OrderAPI.formatDate(order.create_time) }}</td>
+              <td class="actions">
+                <button @click="viewOrder(order.order_no)" class="btn-link">View Details</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 分页组件 -->
+    <div v-if="orders.length > 0" class="pagination-section">
+      <div class="pagination-info">
+        Showing {{ (pagination.current - 1) * pagination.pageSize + 1 }} - 
+        {{ Math.min(pagination.current * pagination.pageSize, pagination.total) }} of {{ pagination.total }} records
+      </div>
+      <div class="pagination-controls">
         <button 
-          class="pagination-btn" 
-          :disabled="currentPage === 1"
-          @click="goToPage(currentPage - 1)"
-        >
-          &lt; Previous
-        </button>
-        <button 
-          v-for="page in visiblePages" 
-          :key="page"
-          :class="['pagination-btn', { active: page === currentPage }]"
-          @click="goToPage(page)"
-        >
-          {{ page }}
-        </button>
-        <button 
+          @click="changePage(pagination.current - 1)" 
+          :disabled="pagination.current <= 1"
           class="pagination-btn"
-          :disabled="currentPage === totalPages"
-          @click="goToPage(currentPage + 1)"
         >
-          Next &gt;
+          Previous
+        </button>
+        
+        <div class="page-numbers">
+          <button 
+            v-for="page in visiblePages" 
+            :key="page"
+            @click="changePage(page)"
+            :class="['page-btn', { active: page === pagination.current }]"
+          >
+            {{ page }}
+          </button>
+        </div>
+        
+        <button 
+          @click="changePage(pagination.current + 1)" 
+          :disabled="pagination.current >= pagination.totalPages"
+          class="pagination-btn"
+        >
+          Next
         </button>
       </div>
     </div>
   </div>
 </template>
 
-<script>
-export default {
-  name: 'OrderList',
-  data() {
-    return {
-      currentPage: 1,
-      itemsPerPage: 6,
-      totalResults: 56,
-      filters: {
-        status: 'all',
-        dateRange: null
-      },
-      orders: [
-        {
-          id: '#ORD-12345',
-          buyer: { name: 'John Smith', email: 'john.smith@example.com' },
-          date: 'May 21, 2023',
-          amount: '$245.99',
-          status: 'Paid'
-        },
-        {
-          id: '#ORD-12344',
-          buyer: { name: 'Sarah Johnson', email: 'sarah.j@example.com' },
-          date: 'May 20, 2023',
-          amount: '$189.50',
-          status: 'Shipped'
-        },
-        {
-          id: '#ORD-12343',
-          buyer: { name: 'Michael Brown', email: 'mbrown@example.com' },
-          date: 'May 19, 2023',
-          amount: '$325.00',
-          status: 'Paid'
-        },
-        {
-          id: '#ORD-12342',
-          buyer: { name: 'Emily Davis', email: 'emily.davis@example.com' },
-          date: 'May 18, 2023',
-          amount: '$78.25',
-          status: 'Cancelled'
-        },
-        {
-          id: '#ORD-12341',
-          buyer: { name: 'Robert Wilson', email: 'rwilson@example.com' },
-          date: 'May 17, 2023',
-          amount: '$159.99',
-          status: 'Shipped'
-        },
-        {
-          id: '#ORD-12340',
-          buyer: { name: 'Jessica Martinez', email: 'jmartinez@example.com' },
-          date: 'May 16, 2023',
-          amount: '$210.75',
-          status: 'Paid'
-        }
-      ]
-    };
-  },
-  computed: {
-    paginatedOrders() {
-      const start = (this.currentPage - 1) * this.itemsPerPage;
-      const end = start + this.itemsPerPage;
-      return this.orders.slice(start, end);
-    },
-    totalPages() {
-      return Math.ceil(this.totalResults / this.itemsPerPage);
-    },
-    startIndex() {
-      return (this.currentPage - 1) * this.itemsPerPage + 1;
-    },
-    endIndex() {
-      const end = this.currentPage * this.itemsPerPage;
-      return end > this.totalResults ? this.totalResults : end;
-    },
-    visiblePages() {
-      const pages = [];
-      for (let i = 1; i <= Math.min(3, this.totalPages); i++) {
-        pages.push(i);
-      }
-      return pages;
-    }
-  },
-  methods: {
-    goToPage(page) {
-      if (page >= 1 && page <= this.totalPages) {
-        this.currentPage = page;
-      }
-    },
-        
-    viewDetails(orderId) {
-        console.log('clicked', orderId)
-        this.$router.push({ name: 'OrderDetail', params: { id: orderId } })
-    },
+<script setup lang="ts">
+import { ref, reactive, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { OrderAPI, type ListOrderRequest, type OrderInfoInList } from '../services/order'
 
-    shipOrder(orderId) {
-      console.log('Ship order:', orderId);
-      // Implement ship order logic
-      // 可以添加确认对话框和API调用
-      if (confirm('Are you sure you want to ship this order?')) {
-        // API call to ship order
-        alert(`Order ${orderId} has been marked as shipped`);
-      }
-    },
-    cancelOrder(orderId) {
-      console.log('Cancel order:', orderId);
-      // Implement cancel order logic
-      if (confirm('Are you sure you want to cancel this order?')) {
-        // API call to cancel order
-        alert(`Order ${orderId} has been cancelled`);
-      }
-    }
+const router = useRouter()
+
+// 响应式数据
+const loading = ref(false)
+const error = ref('')
+const orders = ref<OrderInfoInList[]>([])
+
+// 过滤器状态
+const filters = reactive({
+  orderNo: '',
+  orderStatus: '',
+  userId: '',
+  startTime: '',
+  endTime: ''
+})
+
+// 分页状态
+const pagination = reactive({
+  current: 1,
+  pageSize: 10,
+  total: 0,
+  totalPages: 0
+})
+
+// 计算属性
+const hasActiveFilters = computed(() => {
+  return filters.orderNo || filters.orderStatus || filters.userId || filters.startTime || filters.endTime
+})
+
+const visiblePages = computed(() => {
+  const pages = []
+  const start = Math.max(1, pagination.current - 2)
+  const end = Math.min(pagination.totalPages, pagination.current + 2)
+  
+  for (let i = start; i <= end; i++) {
+    pages.push(i)
   }
-};
+  
+  return pages
+})
+
+// 方法
+const loadOrders = async () => {
+  try {
+    loading.value = true
+    error.value = ''
+
+    const params: ListOrderRequest = {
+      limit: pagination.pageSize,
+      offset: (pagination.current - 1) * pagination.pageSize
+    }
+
+    // 添加过滤条件
+    if (filters.orderNo) params.order_no = filters.orderNo
+    if (filters.orderStatus) params.order_status = Number(filters.orderStatus)
+    if (filters.userId) params.user_id = Number(filters.userId)
+    if (filters.startTime) params.start_time = new Date(filters.startTime).toISOString()
+    if (filters.endTime) params.end_time = new Date(filters.endTime).toISOString()
+
+    const response = await OrderAPI.getOrderList(params)
+
+    if (OrderAPI.isSuccess(response) && response.data) {
+      orders.value = response.data.orders || []
+      pagination.total = response.data.total || 0
+      pagination.totalPages = Math.ceil(pagination.total / pagination.pageSize)
+    } else {
+      throw new Error(response.error || 'Failed to fetch order list')
+    }
+  } catch (err) {
+    console.error('Failed to load orders:', err)
+    error.value = err instanceof Error ? err.message : 'Network error, please try again later'
+    orders.value = []
+    pagination.total = 0
+    pagination.totalPages = 0
+  } finally {
+    loading.value = false
+  }
+}
+
+const handleSearch = () => {
+  pagination.current = 1
+  loadOrders()
+}
+
+const handleReset = () => {
+  filters.orderNo = ''
+  filters.orderStatus = ''
+  filters.userId = ''
+  filters.startTime = ''
+  filters.endTime = ''
+  pagination.current = 1
+  loadOrders()
+}
+
+const changePage = (page: number) => {
+  if (page >= 1 && page <= pagination.totalPages) {
+    pagination.current = page
+    loadOrders()
+  }
+}
+
+const viewOrder = (orderNo: string) => {
+  router.push(`/orders/${orderNo}`)
+}
+
+// 生命周期
+onMounted(() => {
+  loadOrders()
+})
 </script>
 
 <style scoped>
-.order-management {
+.order-list-page {
   padding: 24px;
-  background-color: #f5f5f5;
-  min-height: 100vh;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-.header {
-  margin-bottom: 24px;
+/* 页面标题 */
+.page-header {
+  margin-bottom: 32px;
 }
 
-.title {
+.page-title {
   font-size: 28px;
   font-weight: 600;
   color: #1a1a1a;
   margin: 0 0 8px 0;
 }
 
-.subtitle {
-  font-size: 14px;
+.page-subtitle {
+  font-size: 16px;
   color: #666;
   margin: 0;
 }
 
-.filters {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+/* 过滤器样式 */
+.filters-section {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
   margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.filters-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.date-filter-group {
+  grid-column: span 2;
+  min-width: 400px;
+}
+
+@media (max-width: 1024px) {
+  .date-filter-group {
+    grid-column: span 1;
+    min-width: auto;
+  }
 }
 
 .filter-group {
   display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.filter-group label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.filter-input, .filter-select {
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.filter-input:focus, .filter-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.date-range {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.date-input {
+  flex: 1;
+  min-width: 160px;
+}
+
+/* 强制日期输入框使用英文显示 */
+.date-input::-webkit-datetime-edit-fields-wrapper {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.date-input::-webkit-datetime-edit-text {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.date-input::-webkit-datetime-edit-month-field,
+.date-input::-webkit-datetime-edit-day-field,
+.date-input::-webkit-datetime-edit-year-field,
+.date-input::-webkit-datetime-edit-hour-field,
+.date-input::-webkit-datetime-edit-minute-field {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.date-separator {
+  font-size: 14px;
+  color: #6b7280;
+  white-space: nowrap;
+  padding: 0 4px;
+}
+
+.filters-actions {
+  display: flex;
   gap: 12px;
 }
 
-.filter-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: white;
-  padding: 8px 16px;
-  border-radius: 6px;
-  border: 1px solid #e0e0e0;
-}
-
-.filter-item label {
-  font-size: 14px;
-  color: #666;
-  font-weight: 500;
-}
-
-.select {
+.btn-primary, .btn-secondary, .btn-link {
+  padding: 10px 20px;
   border: none;
-  background: transparent;
+  border-radius: 8px;
   font-size: 14px;
-  color: #1a1a1a;
+  font-weight: 500;
   cursor: pointer;
-  outline: none;
-}
-
-.date-range-btn {
+  transition: all 0.2s;
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: white;
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
-  padding: 8px 16px;
-  font-size: 14px;
-  color: #1a1a1a;
-  cursor: pointer;
+  gap: 6px;
 }
 
-.more-filters-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: white;
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
-  padding: 8px 16px;
-  font-size: 14px;
-  color: #1a1a1a;
-  cursor: pointer;
+.btn-primary {
+  background: #dc6643;
+  color: white;
 }
 
-.icon {
-  font-size: 16px;
+.btn-primary:hover:not(:disabled) {
+  background: #c55a3a;
+}
+
+.btn-primary:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.btn-secondary:hover {
+  background: #e5e7eb;
+}
+
+.btn-link {
+  background: none;
+  color: #dc6643;
+  padding: 4px 8px;
+}
+
+.btn-link:hover {
+  background: #fef3c7;
+  color: #c55a3a;
+}
+
+/* 表格样式 */
+.table-section {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .table-container {
-  background: white;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  margin-bottom: 24px;
+  overflow-x: auto;
 }
 
 .orders-table {
@@ -341,166 +493,202 @@ export default {
   border-collapse: collapse;
 }
 
-.orders-table thead {
-  background-color: #fafafa;
-  border-bottom: 1px solid #e0e0e0;
+.orders-table th,
+.orders-table td {
+  padding: 16px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .orders-table th {
-  text-align: left;
-  padding: 16px 20px;
-  font-size: 12px;
+  background: #f9fafb;
   font-weight: 600;
-  color: #666;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.orders-table tbody tr {
-  border-bottom: 1px solid #f0f0f0;
-  transition: background-color 0.2s;
-}
-
-.orders-table tbody tr:hover {
-  background-color: #fafafa;
+  color: #374151;
+  font-size: 14px;
 }
 
 .orders-table td {
-  padding: 20px;
   font-size: 14px;
-  color: #1a1a1a;
+  color: #1f2937;
 }
 
-.order-id {
+.order-row:hover {
+  background: #f9fafb;
+}
+
+.order-no {
+  color: #3b82f6;
   font-weight: 500;
-  color: #1a1a1a;
-}
-
-.buyer-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.buyer-name {
-  font-weight: 500;
-  color: #1a1a1a;
-}
-
-.buyer-email {
-  font-size: 13px;
-  color: #666;
 }
 
 .amount {
-  font-weight: 500;
+  font-weight: 600;
+  color: #059669;
 }
 
 .status-badge {
-  display: inline-block;
-  padding: 6px 12px;
+  padding: 4px 12px;
   border-radius: 20px;
   font-size: 12px;
   font-weight: 500;
 }
 
-.status-paid {
-  background-color: #fef3c7;
-  color: #92400e;
+.status-created { background: #fef3c7; color: #92400e; }
+.status-paid { background: #dbeafe; color: #1e40af; }
+.status-shipped { background: #fce7f3; color: #ec4899; }
+.status-delivered { background: #d1fae5; color: #065f46; }
+.status-confirmed { background: #dcfce7; color: #166534; }
+.status-cancelled { background: #fecaca; color: #991b1b; }
+.status-unknown { background: #f3f4f6; color: #374151; }
+
+/* 状态样式 */
+.loading-state, .error-state, .empty-state {
+  padding: 64px 24px;
+  text-align: center;
 }
 
-.status-shipped {
-  background-color: #d1fae5;
-  color: #065f46;
+.loading-spinner, .error-icon, .empty-icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 16px;
+  color: #9ca3af;
 }
 
-.status-cancelled {
-  background-color: #fee2e2;
-  color: #991b1b;
+.loading-icon {
+  width: 20px;
+  height: 20px;
+  animation: spin 1s linear infinite;
 }
 
-.action-buttons {
-  display: flex;
-  gap: 8px;
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
-.btn {
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-size: 13px;
+.error-message {
+  color: #dc2626;
+  font-size: 16px;
+  margin-bottom: 16px;
+}
+
+.empty-message {
+  font-size: 18px;
   font-weight: 500;
-  cursor: pointer;
-  border: none;
-  transition: all 0.2s;
+  color: #374151;
+  margin-bottom: 8px;
 }
 
-.btn-secondary {
-  background: white;
-  border: 1px solid #e0e0e0;
-  color: #1a1a1a;
+.empty-description {
+  color: #6b7280;
+  margin-bottom: 24px;
 }
 
-.btn-secondary:hover {
-  background: #f5f5f5;
-}
-
-.btn-primary {
-  background: #dc6b3d;
-  color: white;
-}
-
-.btn-primary:hover {
-  background: #c55a2f;
-}
-
-.btn-danger {
-  background: #dc6b3d;
-  color: white;
-}
-
-.btn-danger:hover {
-  background: #c55a2f;
-}
-
-.footer {
+/* 分页样式 */
+.pagination-section {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-top: 24px;
+  padding: 16px 0;
 }
 
-.results-info {
+.pagination-info {
   font-size: 14px;
-  color: #666;
+  color: #6b7280;
 }
 
-.pagination {
+.pagination-controls {
   display: flex;
+  align-items: center;
   gap: 8px;
 }
 
-.pagination-btn {
-  padding: 8px 16px;
-  border: 1px solid #e0e0e0;
+.pagination-btn, .page-btn {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
   background: white;
+  color: #374151;
   border-radius: 6px;
-  font-size: 14px;
-  color: #1a1a1a;
   cursor: pointer;
+  font-size: 14px;
   transition: all 0.2s;
 }
 
 .pagination-btn:hover:not(:disabled) {
-  background: #f5f5f5;
-}
-
-.pagination-btn.active {
-  background: #dc6b3d;
-  color: white;
-  border-color: #dc6b3d;
+  background: #f3f4f6;
 }
 
 .pagination-btn:disabled {
-  opacity: 0.5;
+  color: #9ca3af;
   cursor: not-allowed;
 }
-</style>
+
+.page-numbers {
+  display: flex;
+  gap: 4px;
+}
+
+.page-btn.active {
+  background: #dc6643;
+  color: white;
+  border-color: #dc6643;
+}
+
+.page-btn:hover:not(.active) {
+  background: #f3f4f6;
+}
+
+/* 响应式样式 */
+@media (max-width: 768px) {
+  .order-list-page {
+    padding: 16px;
+  }
+  
+  .filters-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .date-filter-group {
+    grid-column: span 1;
+    min-width: auto;
+  }
+  
+  .date-range {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  
+  .date-separator {
+    text-align: center;
+    font-weight: 500;
+  }
+  
+  .date-input {
+    min-width: auto;
+  }
+  
+  .pagination-section {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .orders-table {
+    font-size: 12px;
+  }
+  
+  .orders-table th,
+  .orders-table td {
+    padding: 12px 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .date-range {
+    gap: 8px;
+  }
+  
+  .date-separator {
+    padding: 4px 0;
+  }
+}</style>

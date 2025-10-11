@@ -154,6 +154,26 @@ export class OrderAPI {
   }
 
   /**
+   * 发货
+   * @param orderNo 订单号
+   * @param trackingNo 物流单号
+   * @returns Promise<OrderApiResponse<void>>
+   */
+  static async shipOrder(orderNo: string, trackingNo: string): Promise<OrderApiResponse<void>> {
+    const response = await fetch(`${API_BASE_URL}/merchant/ship`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        order_no: orderNo,
+        tracking_no: trackingNo
+      }),
+      credentials: 'include'  // 包含cookies
+    })
+
+    return response.json()
+  }
+
+  /**
    * 检查API响应是否成功
    * @param response API响应
    * @returns boolean
