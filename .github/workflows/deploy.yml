@@ -9,53 +9,41 @@ on:
             default: 'latest'
             type: string
         command:
-            description: 'deploy or restart'
+            description: 'deploy'
             required: true
             default: 'deploy'
             type: choice
             options:
                 - deploy
-                - restart
 
 jobs:
-  build:
-    if: ${{ github.event.inputs.command == 'deploy' }} # ← 仅在 deploy 时构建
-    runs-on: ubuntu-latest
-    env:
-      DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
-    steps:
-      - name: checkout
-        uses: actions/checkout@v4
-      - name: login to dockerhub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-      - name: build docker image
-        run: |
-          docker build -t "${DOCKER_HUB_USERNAME}/ceramicraft-merchant-frontend:${{ github.event.inputs.version }}" .
-      - name: push to dockerhub
-        run: |
-          docker push "${DOCKER_HUB_USERNAME}/ceramicraft-merchant-frontend:${{ github.event.inputs.version }}"
   deploy:
-    if : ${{ github.event.inputs.command == 'deploy'}}
-    needs: build
-    runs-on: self-hosted
-    env:
-      DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+    runs-on: ubuntu-latest
     steps:
-      - name: pull the docker image
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - name: Install & Build
         run: |
-          docker pull "${DOCKER_HUB_USERNAME}/ceramicraft-merchant-frontend:${{ github.event.inputs.version }}" 
-      - name: run docker container
+          npm ci
+          npm run build
+      - name: Add SSH key
+        env: 
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
-          docker stop ceramicraft-merchant-frontend || true
-          docker rm ceramicraft-merchant-frontend || true
-          docker run -d --name ceramicraft-merchant-frontend --network ceramicraft-network "${DOCKER_HUB_USERNAME}/ceramicraft-merchant-frontend:${{ github.event.inputs.version }}"
-  restart:
-    if : ${{ github.event.inputs.command == 'restart'}}
-    runs-on: self-hosted
-    steps:
-      - name: restart docker container
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+      - name: Push dist to server
         run: |
-          docker restart ceramicraft-merchant-frontend || true
+          rsync -avz --delete --exclude=.git \
+            dist/ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.TARGET_DIR }}/
+      - name: Reload Nginx
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "docker exec nginx nginx -s reload"
