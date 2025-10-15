@@ -309,8 +309,7 @@ const convertReviewData = (apiReview: ReviewInfo): Review => {
     text: apiReview.content,
     date: new Date(apiReview.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
     status: apiReview.is_pinned ? 'Pinned' : 'Normal',
-    likes: apiReview.likes,
-    merchantReply: apiReview.parent_id ? undefined : undefined // 暂时没有商家回复数据
+    likes: apiReview.likes
   }
 }
 
