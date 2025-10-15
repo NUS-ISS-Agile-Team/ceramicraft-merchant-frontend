@@ -51,6 +51,12 @@ const routes: Array<RouteRecordRaw> =
             path: 'orders/:id',
             name: 'OrderDetail',
             component: () => import('../views/OrderDetail.vue')
+          },
+          {
+            path: 'reviews',
+            name: 'Reviews',
+            component: () => import('../views/ReviewList.vue'),
+            meta: {requiresAuth: true}
           }
 
         ]  
