@@ -51,9 +51,10 @@ jobs:
       - name: Checkout GitOps repo
         uses: actions/checkout@v4
         with:
-          repository: https://github.com/NUS-ISS-Agile-Team/ceramicraft-argocd-deploy.git
+          repository: NUS-ISS-Agile-Team/ceramicraft-argocd-deploy.git
           token: ${{ secrets.GITOPS_PAT }}
           path: gitops
+          ref: main
       - name: update YAML file
         run: |
           sed -i "s|image: .*$|image: ${DOCKER_HUB_USERNAME}/ceramicraft-merchant-frontend:${{ github.event.inputs.version }}|g" gitops/${YAML_FILE}
