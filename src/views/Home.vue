@@ -142,7 +142,7 @@ onMounted(async () => {
   loading.value = true
   errorMsg.value = ''
   try {
-    const response = await fetch('/api/order-ms/v1/merchant/list', {
+    const response = await fetch('/api/order-ms/v1/merchant/orders/list', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ limit: 5, offset: 0 }),

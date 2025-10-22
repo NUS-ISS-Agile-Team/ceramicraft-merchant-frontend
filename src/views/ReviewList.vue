@@ -506,25 +506,31 @@ const togglePin = async (reviewId: string) => {
   const review = reviews.value.find(r => r.id === reviewId)
   if (!review) return
   
-  const willPin = review.status !== 'Pinned'
+  // 如果已经是置顶状态，提示无法重复置顶
+  if (review.status === 'Pinned') {
+    alert('This review is already pinned. Cannot pin it again.')
+    return
+  }
   
   try {
-    const response = await togglePinReview(reviewId)
+    const response = await togglePinReview(reviewId, true)
     
     console.log('Toggle pin response:', response) // 调试日志
     
     if (response.status === 0) {
-      review.status = willPin ? 'Pinned' : 'Normal'
-      console.log(`Review ${reviewId} ${willPin ? 'pinned' : 'unpinned'}`)
-      alert(`Successfully ${willPin ? 'pinned' : 'unpinned'} the review!`)
+      console.log(`Review ${reviewId} pinned successfully`)
+      alert('Successfully pinned the review!')
+      
+      // 刷新评论列表以获取最新状态
+      await loadReviews()
     } else {
       const errorMsg = response.msg || response.error || 'Unknown error'
-      console.error('Pin toggle failed:', errorMsg)
-      alert('Failed to toggle pin: ' + errorMsg)
+      console.error('Pin failed:', errorMsg)
+      alert('Failed to pin review: ' + errorMsg)
     }
   } catch (error) {
-    console.error('Error toggling pin:', error)
-    alert('Failed to toggle pin. Please try again.')
+    console.error('Error pinning review:', error)
+    alert('Failed to pin review. Please try again.')
   }
 }
 

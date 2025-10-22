@@ -66,7 +66,7 @@ export interface ReplyReviewResponse extends ApiResponse {
  */
 export const getReviewList = async (params: ReviewListRequest = {}): Promise<ReviewListResponse> => {
   try {
-    const response = await fetch('/api/comment-ms/v1/merchant/list', {
+    const response = await fetch('/api/comment-ms/v1/merchant/reviews/list', {
       method: 'POST',
       headers: {
         'accept': 'application/json',
@@ -94,15 +94,21 @@ export const getReviewList = async (params: ReviewListRequest = {}): Promise<Rev
  */
 export const replyToReview = async (params: ReplyReviewRequest): Promise<ReplyReviewResponse> => {
   try {
-    // TODO: 替换为实际的回复API端点
-    const response = await fetch('/api/comment-ms/v1/merchant/reply', {
+    // 新API: POST /reviews/:review_id/reply
+  const response = await fetch(`/api/comment-ms/v1/merchant/reviews/${params.parentID}/replies`, {
       method: 'POST',
       headers: {
         'accept': 'application/json',
         'Content-Type': 'application/json',
       },
       credentials: 'include',  // 包含cookies
-      body: JSON.stringify(params)
+      body: JSON.stringify({
+        content: params.content,
+        is_anonymous: params.is_anonymous,
+        pic_info: params.pic_info,
+        productID: params.productID,
+        stars: params.stars
+      })
     })
 
     const data: ReplyReviewResponse = await response.json()
@@ -145,21 +151,19 @@ export const deleteReview = async (reviewId: string): Promise<ApiResponse> => {
 /**
  * 置顶/取消置顶评论
  * @param reviewId 评论ID
- * @param pinned 是否置顶
+ * @param isPinned 是否置顶
  * @returns 操作结果
  */
-export const togglePinReview = async (reviewId: string): Promise<ApiResponse> => {
+export const togglePinReview = async (reviewId: string, isPinned: boolean): Promise<ApiResponse> => {
   try {
-    const response = await fetch('/api/comment-ms/v1/merchant/pin', {
-      method: 'POST',
+    const response = await fetch(`/api/comment-ms/v1/merchant/reviews/${reviewId}`, {
+      method: 'PATCH',
       headers: {
         'accept': 'application/json',
         'Content-Type': 'application/json',
       },
       credentials: 'include',  // 包含cookies
-      body: JSON.stringify({
-        review_id: reviewId
-      })
+      body: JSON.stringify({ is_pinned: isPinned })
     })
 
     const data: ApiResponse = await response.json()

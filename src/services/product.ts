@@ -107,7 +107,7 @@ export class ProductAPI {
        */
       static async addProduct(productData: CreateProductRequest):
           Promise<BaseResponse> {
-    const response = await fetch(`${this.BASE_URL}/add`, {
+    const response = await fetch(`${this.BASE_URL}/products`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify(productData),
@@ -137,10 +137,10 @@ export class ProductAPI {
    * @returns Promise<BaseResponse>
    */
   static async publishProduct(productId: number): Promise<BaseResponse> {
-    const response = await fetch(`${this.BASE_URL}/publish`, {
-      method: 'POST',
+    const response = await fetch(`${this.BASE_URL}/products/${productId}/status`, {
+      method: 'PATCH',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({id: productId}),
+      body: JSON.stringify({status: ProductStatus.PUBLISHED}),
       credentials: 'include'
     })
 
@@ -153,10 +153,10 @@ export class ProductAPI {
    * @returns Promise<BaseResponse>
    */
   static async unpublishProduct(productId: number): Promise<BaseResponse> {
-    const response = await fetch(`${this.BASE_URL}/unpublish`, {
-      method: 'POST',
+    const response = await fetch(`${this.BASE_URL}/products/${productId}/status`, {
+      method: 'PATCH',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({id: productId}),
+      body: JSON.stringify({status: ProductStatus.UNPUBLISHED}),
       credentials: 'include'
     })
 
@@ -171,10 +171,10 @@ export class ProductAPI {
    */
   static async updateStock(productId: number, stock: number):
       Promise<BaseResponse> {
-    const response = await fetch(`${this.BASE_URL}/updateStock`, {
-      method: 'POST',
+    const response = await fetch(`${this.BASE_URL}/products/${productId}/stock`, {
+      method: 'PATCH',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({id: productId, stock: stock}),
+      body: JSON.stringify({stock: stock}),
       credentials: 'include'
     })
 
@@ -188,10 +188,11 @@ export class ProductAPI {
    */
   static async editProduct(productData: UpdateProductRequest):
       Promise<BaseResponse> {
-    const response = await fetch(`${this.BASE_URL}/edit`, {
-      method: 'POST',
+    const { id, ...updateData } = productData
+    const response = await fetch(`${this.BASE_URL}/products/${id}`, {
+      method: 'PUT',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(productData),
+      body: JSON.stringify(updateData),
       credentials: 'include'
     })
 
@@ -383,7 +384,7 @@ export class ProductAPI {
     if (params.order_by !== undefined) queryParams.append('order_by', params.order_by.toString())
     
     const queryString = queryParams.toString()
-    const url = `${this.BASE_URL}/list${queryString ? `?${queryString}` : ''}`
+    const url = `${this.BASE_URL}/products${queryString ? `?${queryString}` : ''}`
     
     const response = await fetch(url, {
       method: 'GET',
