@@ -1,0 +1,4 @@
+Label,# Samples,Average,Min,Max,Std. Dev.,Error %,Throughput,Received KB/sec,Sent KB/sec,Avg. Bytes
+GET /product-ms/v1/customer/products,500,10,5,105,8.30,0.000%,50.55612,45.37,7.01,919.0
+GET /product-ms/v1/customer/product/{id},500,10,5,90,9.51,0.000%,50.77173,26.03,7.29,525.0
+TOTAL,1000,10,5,105,8.93,0.000%,101.05093,71.25,14.26,722.0

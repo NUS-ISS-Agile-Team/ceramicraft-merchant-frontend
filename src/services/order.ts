@@ -128,7 +128,7 @@ export class OrderAPI {
    * @returns Promise<OrderApiResponse<ListOrderResponse>>
    */
   static async getOrderList(params: ListOrderRequest): Promise<OrderApiResponse<ListOrderResponse>> {
-    const response = await fetch(`${API_BASE_URL}/merchant/list`, {
+    const response = await fetch(`${API_BASE_URL}/merchant/orders/list`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(params),
@@ -144,7 +144,7 @@ export class OrderAPI {
    * @returns Promise<OrderApiResponse<OrderDetail>>
    */
   static async getOrderDetail(orderNo: string): Promise<OrderApiResponse<OrderDetail>> {
-    const response = await fetch(`${API_BASE_URL}/merchant/detail/${orderNo}`, {
+    const response = await fetch(`${API_BASE_URL}/merchant/orders/${orderNo}`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include'  // 包含cookies
@@ -160,11 +160,10 @@ export class OrderAPI {
    * @returns Promise<OrderApiResponse<void>>
    */
   static async shipOrder(orderNo: string, trackingNo: string): Promise<OrderApiResponse<void>> {
-    const response = await fetch(`${API_BASE_URL}/merchant/ship`, {
-      method: 'POST',
+    const response = await fetch(`${API_BASE_URL}/merchant/orders/${orderNo}/ship`, {
+      method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        order_no: orderNo,
         tracking_no: trackingNo
       }),
       credentials: 'include'  // 包含cookies

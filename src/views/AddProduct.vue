@@ -368,7 +368,7 @@ const handleSubmit = async () => {
             price: parseFloat(form.price) * 100, 
             stock: parseInt(form.stock),
             desc: form.desc,
-            pic_info: form.pic_info || undefined,
+            pic_info: form.pic_info.length > 0 ? JSON.stringify(form.pic_info) : undefined,
             dimensions: form.dimensions || undefined,
             material: form.material || undefined,
             weight: form.weight || undefined,
