@@ -14,7 +14,7 @@ jobs:
     steps:
       # ---- ① 检出源码 ----
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       # ---- ② 安装 Node 与依赖 ----
       - name: Setup Node
