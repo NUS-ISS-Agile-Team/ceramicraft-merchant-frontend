@@ -251,7 +251,7 @@ const getImageUrl = (picInfo?: string | string[]) => {
 
     // 如果是数组，获取第一张图片的ID
     if (Array.isArray(picInfo) && picInfo.length > 0) {
-        imageId = picInfo[0]
+        imageId = picInfo[0] || ''
     }
     // 如果是字符串，尝试解析
     else if (typeof picInfo === 'string') {
@@ -259,7 +259,7 @@ const getImageUrl = (picInfo?: string | string[]) => {
             // 尝试解析JSON字符串格式的图片信息
             const imageArray = JSON.parse(picInfo)
             if (Array.isArray(imageArray) && imageArray.length > 0) {
-                imageId = imageArray[0]
+                imageId = imageArray[0] || ''
             }
         } catch {
             // 如果不是JSON格式，直接使用字符串
