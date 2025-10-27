@@ -18,7 +18,7 @@ jobs:
 
       # ---- ② 安装 Node 与依赖 ----
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 24
           cache: npm
