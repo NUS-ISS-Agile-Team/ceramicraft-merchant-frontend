@@ -16,10 +16,10 @@ updates:
     # Add reviewers to pull requests
     reviewers:
       - "NUS-ISS-Agile-Team"
-    # Add labels to pull requests
-    labels:
-      - "dependencies"
-      - "automated"
+    # Add labels to pull requests (uncomment after creating labels in GitHub)
+    # labels:
+    #   - "dependencies"
+    #   - "automated"
     # Group dependency updates
     groups:
       # Group all patch updates together
@@ -64,10 +64,11 @@ updates:
       time: "09:00"
       timezone: "Asia/Singapore"
     open-pull-requests-limit: 3
-    labels:
-      - "dependencies"
-      - "github-actions"
-      - "automated"
+    # Add labels to pull requests (uncomment after creating labels in GitHub)
+    # labels:
+    #   - "dependencies"
+    #   - "github-actions"
+    #   - "automated"
     commit-message:
       prefix: "chore(ci)"
       include: "scope"
