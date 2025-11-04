@@ -201,10 +201,10 @@ export class OrderAPI {
 
     // 如果不是 2xx，尝试读取返回的错误信息并返回一个包含 error 的结构，方便上层处理
     if (!response.ok) {
-      let errBody: any = {}
+      let errBody: Record<string, unknown> = {}
       try {
-        errBody = await response.json()
-      } catch (_) {
+        errBody = await response.json() as Record<string, unknown>
+      } catch {
         // ignore parse errors
       }
 

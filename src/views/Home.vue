@@ -230,7 +230,7 @@ onMounted(async () => {
     loading.value = false
   }
   // ensure statsPromise resolved (if not awaited before)
-  try { await statsPromise } catch (_) { /* ignore */ }
+  try { await statsPromise } catch { /* ignore */ }
 })
 </script>
 
