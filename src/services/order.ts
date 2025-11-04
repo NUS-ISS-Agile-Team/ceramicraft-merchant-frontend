@@ -120,16 +120,19 @@ export interface OrderApiResponse<T = unknown> {
   error?: string
 }
 
-// 订单统计接口返回类型（假定字段，见下方说明）
+// 订单统计接口返回类型（基于实际后端响应）
 export interface OrderStats {
-  total_sales?: number    // 总销售额（分）
-  total_orders?: number   // 总订单数
-  average_order?: number  // 平均订单金额（分）
-  total_customers?: number// 总客户数
+  total_sales: number         // 总销售额（分）
+  total_orders: number        // 总订单数
+  avg_sales_per_order: number // 平均订单金额（分）
+  total_customers: number     // 总客户数
 }
 
 export interface OrderStatsResponse {
-  stats: OrderStats
+  total_sales: number
+  total_orders: number
+  avg_sales_per_order: number
+  total_customers: number
 }
 
 // 订单API服务类
@@ -186,9 +189,8 @@ export class OrderAPI {
 
   /**
    * 获取订单统计数据（Dashboard 使用）
-   * 注意：后端接口路径为 /merchant/order-stats
-   * 假设返回格式为 { status: 0, data: { stats: { total_sales, total_orders, average_order, total_customers } } }
-   * 如果后端字段不同，请告诉我接口的真实返回结构，我会调整类型与处理逻辑。
+   * 后端接口路径: /merchant/order-stats
+   * 返回格式: { status: 0, data: { total_sales, total_orders, avg_sales_per_order, total_customers }, msg: "ok", error: "" }
    */
   static async getOrderStats(): Promise<OrderApiResponse<OrderStatsResponse>> {
     const response = await fetch(`${API_BASE_URL}/merchant/order-stats`, {

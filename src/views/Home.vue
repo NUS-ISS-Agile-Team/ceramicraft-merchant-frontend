@@ -144,29 +144,22 @@ onMounted(async () => {
       // 打印原始响应，便于在浏览器 console 或后端联调时查看实际结构
       console.debug('getOrderStats raw response:', resp)
 
-      // 后端可能返回多种格式：
-      // 1) { status:0, data: { stats: { total_sales, total_orders, ... } } }
-      // 2) { status:0, data: { total_sales, total_orders, ... } }
-      // 3) { total_sales, total_orders, ... }
-      // 为兼容这些情况，先尝试多级提取
-  // 使用 any 来宽松处理后端任意返回格式，避免类型检查阻止运行时解析
-  const raw: any = resp as any
-  const payload = raw?.data ?? raw ?? {}
-  // stats 可能在 payload.stats，也可能字段直接在 payload
-  const s: any = payload.stats ?? payload
+      // 后端返回格式: { status:0, data: { total_sales, total_orders, avg_sales_per_order, total_customers } }
+      // 使用 Record<string, unknown> 来安全处理后端返回的动态字段
+      const payload: Record<string, unknown> = (resp?.data as unknown as Record<string, unknown>) ?? {}
 
-      // 辅助解析：优先取 s 中的字段，否则退回到 payload
-      const readNumber = (obj: any, key: string) => {
+      // 辅助解析：从对象中安全读取 number 类型字段
+      const readNumber = (obj: Record<string, unknown>, key: string): number | null => {
         if (!obj) return null
         const v = obj[key]
         return typeof v === 'number' ? v : null
       }
 
-      const totalSalesVal = readNumber(s, 'total_sales') ?? readNumber(payload, 'total_sales')
-      const totalOrdersVal = readNumber(s, 'total_orders') ?? readNumber(payload, 'total_orders')
-      // 后端返回的字段名是 avg_sales_per_order，不是 average_order
-      const avgOrderVal = readNumber(s, 'avg_sales_per_order') ?? readNumber(payload, 'avg_sales_per_order') ?? readNumber(s, 'average_order') ?? readNumber(payload, 'average_order')
-      const totalCustomersVal = readNumber(s, 'total_customers') ?? readNumber(payload, 'total_customers')
+      const totalSalesVal = readNumber(payload, 'total_sales')
+      const totalOrdersVal = readNumber(payload, 'total_orders')
+      // 后端返回的字段名是 avg_sales_per_order
+      const avgOrderVal = readNumber(payload, 'avg_sales_per_order')
+      const totalCustomersVal = readNumber(payload, 'total_customers')
 
       // 赋值并格式化显示（金额假定为分）
       totalSales.value = totalSalesVal
@@ -179,8 +172,8 @@ onMounted(async () => {
       avgOrderDisplay.value = avgOrder.value !== null ? `$${(avgOrder.value / 100).toFixed(2)}` : '$—'
       totalCustomersDisplay.value = totalCustomers.value !== null ? String(totalCustomers.value) : '—'
       // 如果后端返回了错误信息，且是认证相关，则在界面显示友好提示
-      if (resp && (resp as any).error) {
-        const err = (resp as any).error
+      if (resp && resp.error) {
+        const err = resp.error
         console.warn('Order stats returned error:', err)
         if (typeof err === 'string' && err.toLowerCase().includes('auth')) {
           errorMsg.value = '统计数据需要登录或会话已过期，请重新登录。'
