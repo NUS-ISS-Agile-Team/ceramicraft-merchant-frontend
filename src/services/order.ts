@@ -120,6 +120,18 @@ export interface OrderApiResponse<T = unknown> {
   error?: string
 }
 
+// 订单统计接口返回类型（假定字段，见下方说明）
+export interface OrderStats {
+  total_sales?: number    // 总销售额（分）
+  total_orders?: number   // 总订单数
+  average_order?: number  // 平均订单金额（分）
+  total_customers?: number// 总客户数
+}
+
+export interface OrderStatsResponse {
+  stats: OrderStats
+}
+
 // 订单API服务类
 export class OrderAPI {
   /**
@@ -168,6 +180,37 @@ export class OrderAPI {
       }),
       credentials: 'include'  // 包含cookies
     })
+
+    return response.json()
+  }
+
+  /**
+   * 获取订单统计数据（Dashboard 使用）
+   * 注意：后端接口路径为 /merchant/order-stats
+   * 假设返回格式为 { status: 0, data: { stats: { total_sales, total_orders, average_order, total_customers } } }
+   * 如果后端字段不同，请告诉我接口的真实返回结构，我会调整类型与处理逻辑。
+   */
+  static async getOrderStats(): Promise<OrderApiResponse<OrderStatsResponse>> {
+    const response = await fetch(`${API_BASE_URL}/merchant/order-stats`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include'
+    })
+
+    // 如果不是 2xx，尝试读取返回的错误信息并返回一个包含 error 的结构，方便上层处理
+    if (!response.ok) {
+      let errBody: any = {}
+      try {
+        errBody = await response.json()
+      } catch (_) {
+        // ignore parse errors
+      }
+
+      return {
+        status: response.status,
+        error: errBody?.error ?? errBody?.msg ?? `HTTP ${response.status}`
+      } as unknown as OrderApiResponse<OrderStatsResponse>
+    }
 
     return response.json()
   }
