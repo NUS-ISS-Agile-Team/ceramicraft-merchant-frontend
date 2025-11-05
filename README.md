@@ -1,202 +1,371 @@
-# CeramicCraft 用户端
-## 技术栈
+# CeramiCraft Merchant Frontend
 
-- Vue 3 + TypeScript + Vite
-- Vue Router
-- Element Plus
-- Sass
+[ English | [简体中文](./README_zh.md) ]
 
-## 快速开始
+<div align="center">
+
+![Vue.js](https://img.shields.io/badge/Vue.js-3.5.22-4FC08D?style=flat&logo=vue.js&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.9.3-3178C6?style=flat&logo=typescript&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-7.1.12-646CFF?style=flat&logo=vite&logoColor=white)
+![Element Plus](https://img.shields.io/badge/Element_Plus-2.11.7-409EFF?style=flat&logo=element&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green.svg)
+
+A modern merchant management platform for handcraft shopping website built with Vue 3 + TypeScript + Element Plus
+
+[Features](#-features) •
+[Quick Start](#-quick-start) •
+[Project Structure](#-project-structure) •
+[Development Guide](#-development-guide) •
+[Deployment](#-deployment)
+
+</div>
+
+---
+
+## 📋 Table of Contents
+
+- [Features](#-features)
+- [Tech Stack](#-tech-stack)
+- [Quick Start](#-quick-start)
+- [Project Structure](#-project-structure)
+- [Core Features](#-core-features)
+- [Development Guide](#-development-guide)
+- [API Endpoints](#-api-endpoints)
+- [Build & Deployment](#-build--deployment)
+- [Code Standards](#-code-standards)
+- [Browser Support](#-browser-support)
+- [License](#-license)
+
+## ✨ Features
+
+- 🎨 **Modern UI** - Beautiful interface built with Element Plus
+- 🚀 **Lightning Fast** - Powered by Vite with instant HMR
+- 📱 **Responsive Design** - Adapts to all screen sizes
+- 🔐 **Authentication** - Complete login/logout flow
+- 📦 **Product Management** - Full CRUD operations for products
+- 📋 **Order Management** - View and manage orders
+- ⭐ **Review Management** - View and manage product reviews
+- 🐳 **Docker Support** - Containerized deployment solution
+- 🎯 **TypeScript** - Full type safety
+- 📊 **Data Visualization** - Dashboard with statistics
+
+## 🛠 Tech Stack
+
+### Core Framework
+- **[Vue 3](https://vuejs.org/)** `3.5.22` - Progressive JavaScript Framework
+- **[TypeScript](https://www.typescriptlang.org/)** `5.9.3` - Typed superset of JavaScript
+- **[Vite](https://vitejs.dev/)** `7.1.12` - Next Generation Frontend Tooling
+
+### UI Component Library
+- **[Element Plus](https://element-plus.org/)** `2.11.7` - Vue 3 UI Component Library
+- **[Font Awesome](https://fontawesome.com/)** `7.1.0` - Icon Library
+
+### Router & State
+- **[Vue Router](https://router.vuejs.org/)** `4.6.3` - Official Router for Vue.js
+
+### HTTP Client
+- **[Axios](https://axios-http.com/)** `1.13.1` - Promise based HTTP client
+
+### Development Tools
+- **[ESLint](https://eslint.org/)** `9.39.0` - Code quality and style checker
+- **[Vue TSC](https://github.com/vuejs/language-tools)** `3.1.3` - TypeScript type checker for Vue
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- **Node.js**: >= 18.0.0
+- **npm**: >= 9.0.0 or **pnpm**: >= 8.0.0
+
+### Installation
 
 ```bash
-# 安装依赖
-npm install
+# Clone the repository
+git clone https://github.com/NUS-ISS-Agile-Team/ceramicraft-merchant-frontend.git
 
-# 启动开发服务器
+# Navigate to project directory
+cd ceramicraft-merchant-frontend
+
+# Install dependencies
+npm install
+```
+
+### Development
+
+```bash
+# Start development server
 npm run dev
 
-# 构建生产版本
+# Server will run at http://localhost:5173
+```
+
+### Build for Production
+
+```bash
+# Build the project
 npm run build
 
-# 类型检查
-npm run type-check
+# Preview production build
+npm run preview
 ```
 
-## 项目结构
+### Code Linting
 
-```
-src/
-├── components/     # 公共组件
-├── views/         # 页面
-│   ├── Home.vue   # 首页
-│   └── Login.vue  # 登录注册
-├── layouts/       # 布局组件
-├── router/        # 路由
-├── types/         # TypeScript 类型定义
-├── assets/        # 静态资源
-└── main.ts        # 入口文件
+```bash
+# Run ESLint
+npm run lint
 ```
 
-## 代码规范
+## 🎯 Core Features
 
-### 命名规范
-- 组件文件：`PascalCase.vue`
-- TypeScript 文件：`camelCase.ts`
-- 类型定义：`PascalCase`
-- 变量/函数：`camelCase`
-- CSS类名：`kebab-case`
+### 1. Authentication System
+- ✅ Merchant login
+- ✅ Logout
+- ✅ Route guards (Token-based)
+- ✅ Auto-redirect
 
-### Vue 组件结构
-```vue
-<template>
-  <!-- 模板 -->
-</template>
+### 2. Product Management
+- ✅ View product list (with search & category filter)
+- ✅ Add new products (with multi-image upload)
+- ✅ Edit product information
+- ✅ Publish/unpublish products
+- ✅ Manage product inventory
+- ✅ View product details
 
-<script setup lang="ts">
-// TypeScript 逻辑
-</script>
+### 3. Order Management
+- ✅ View order list
+- ✅ View order details
+- ✅ Manage order status
+- ✅ Order search and filtering
 
-<style scoped>
-/* 样式 */
-</style>
-```
+### 4. Review Management
+- ✅ View product review list
+- ✅ View review details
+- ✅ Filter reviews
 
-### TypeScript 规范
-```typescript
-// 接口定义
-interface User {
-  id: number
-  name: string
-  email: string
-}
+### 5. Dashboard
+- ✅ Sales statistics
+- ✅ Order count statistics
+- ✅ Average order amount
+- ✅ Customer count statistics
+- ✅ Recent orders display
 
-// 函数类型注解
-function getUser(id: number): Promise<User> {
-  // 实现逻辑
-}
+## 💻 Development Guide
 
-// Props 类型定义
-interface Props {
-  user: User
-  showDetails?: boolean
-}
-```
+### API Proxy Configuration
 
-## 注释规范
+This project uses Vite's proxy feature to forward all requests starting with `/api` to the backend service:
 
 ```typescript
-/**
- * 获取用户信息
- * @param id - 用户ID
- * @returns 用户信息对象
- */
-async function getUser(id: number): Promise<User> {
-  // 实现逻辑
-}
-```
-
-```vue
-<template>
-  <!-- 重要区域注释 -->
-  <div class="user-info">
-    <!-- 用户头像 -->
-    <img :src="avatar" alt="头像" />
-  </div>
-</template>
-
-<script setup lang="ts">
-// Props 类型定义
-interface Props {
-  /** 用户头像地址 */
-  avatar: string
-}
-</script>
-```
-
-## Git 提交规范
-
-```
-type: 简短描述
-
-feat: 新功能
-fix: 修复问题
-docs: 文档更新
-style: 样式调整
-type: 类型定义更新
-```
-
-示例：
-```
-feat: 添加用户登录功能
-fix: 修复首页商品展示问题
-type: 添加产品相关类型定义
-```
-
-## API 集成
-
-### 后端服务配置
-
-项目集成了以下微服务：
-
-1. **用户微服务** - `http://localhost:8080/user-ms/v1`
-   - 用户登录：`POST /merchant/login`
-   - 用户登出：`POST /merchant/logout`
-   - 用户注册：`POST /merchant/users`
-   - 用户激活：`PUT /merchant/users/activate`
-
-2. **产品微服务** - `http://localhost:8080/product-ms/v1`
-   - 添加商品：`POST /merchant/add`
-   - 获取商品详情：`GET /merchant/product/{id}`
-   - 上架商品：`POST /merchant/publish`
-   - 下架商品：`POST /merchant/unpublish`
-   - 更新库存：`POST /merchant/updateStock`
-
-### 开发环境配置
-
-在 `vite.config.ts` 中配置了API代理：
-
-```typescript
+// vite.config.ts
 server: {
   proxy: {
-    '/user-ms': {
-      target: 'http://localhost:8080',
+    '/api': {
+      target: 'http://ceramicraft-merchant-frontend',
       changeOrigin: true,
       secure: false,
-    },
-    '/product-ms': {
-      target: 'http://localhost:8080',
-      changeOrigin: true,
-      secure: false,
+      rewrite: (path) => path.replace(/^\/api/, '')
     }
   }
 }
 ```
 
-### 功能特性
+### Route Guards
 
-1. **用户认证**
-   - 商家登录/登出
-   - Cookie-based 认证
-   - 路由守卫保护
+Route guards verify user identity by checking `userToken` in `localStorage`:
 
-2. **产品管理**
-   - 添加新产品
-   - 上架/下架产品
-   - 更新库存（仅限下架状态）
-   - 产品图片URL支持
-
-3. **用户体验**
-   - 响应式设计
-   - 友好的通知系统
-   - 表单验证
-   - 加载状态提示
-
-### 启动后端服务
-
-确保后端API服务运行在 `localhost:8080`，然后启动前端开发服务器：
-
-```bash
-npm run dev
+```typescript
+// src/router/index.ts
+router.beforeEach((to, _from, next) => {
+  const isAuthenticated = localStorage.getItem('userToken')
+  
+  if (to.meta?.requiresAuth && !isAuthenticated) {
+    next('/auth/login')
+  } else if (to.path === '/auth/login' && isAuthenticated) {
+    next('/')
+  } else {
+    next()
+  }
+})
 ```
 
-访问 `http://localhost:5173` 开始使用应用。
+### Adding New Pages
+
+1. Create a new `.vue` file in `src/views/`
+2. Add route configuration in `src/router/index.ts`
+3. Add `meta: { requiresAuth: true }` if authentication is required
+
+Example:
+
+```typescript
+{
+  path: 'new-page',
+  name: 'NewPage',
+  component: () => import('../views/NewPage.vue'),
+  meta: { requiresAuth: true }
+}
+```
+
+### Calling APIs
+
+Use API classes from the `services/` directory:
+
+```typescript
+import { ProductAPI } from '@/services/product'
+
+// Get product list
+const response = await ProductAPI.getProductList({
+  keyword: 'ceramic',
+  category: 'vase',
+  offset: 0
+})
+
+if (response.code === 0) {
+  console.log(response.data)
+}
+```
+
+## 🔌 API Endpoints
+
+### Authentication API (`auth.ts`)
+- `POST /api/user-ms/v1/merchant/login` - Merchant login
+- `POST /api/user-ms/v1/merchant/logout` - Merchant logout
+- `GET /api/user-ms/v1/merchant/info` - Get merchant info
+
+### Product API (`product.ts`)
+- `GET /api/product-ms/v1/merchant/list` - Get product list
+- `POST /api/product-ms/v1/merchant/create` - Create product
+- `PUT /api/product-ms/v1/merchant/update` - Update product info
+- `PUT /api/product-ms/v1/merchant/update_status` - Update product status
+- `PUT /api/product-ms/v1/merchant/update_stock` - Update product stock
+- `DELETE /api/product-ms/v1/merchant/delete` - Delete product
+- `POST /api/product-ms/v1/merchant/img/upload` - Upload product image
+
+### Order API (`order.ts`)
+- `GET /api/order-ms/v1/merchant/list` - Get order list
+- `GET /api/order-ms/v1/merchant/info` - Get order details
+- `PUT /api/order-ms/v1/merchant/update_status` - Update order status
+
+### Review API (`review.ts`)
+- `GET /api/review-ms/v1/merchant/list` - Get review list
+
+## 🐳 Build & Deployment
+
+### Docker Deployment
+
+#### Option 1: Using Build Script
+
+```bash
+# Make script executable
+chmod +x build_dkimg.sh
+
+# Build Docker image
+./build_dkimg.sh
+
+# Run container
+docker run -d -p 8080:8080 --name ceramicraft-merchant ceramicraft-merchant-frontend:latest
+```
+
+#### Option 2: Manual Build
+
+```bash
+# Build image
+docker build -t ceramicraft-merchant-frontend:latest .
+
+# Run container
+docker run -d -p 8080:8080 --name ceramicraft-merchant ceramicraft-merchant-frontend:latest
+
+# Access application
+# http://localhost:8080
+```
+
+### Image Features
+
+- **Multi-stage build**: Reduces final image size
+- **Alpine-based**: Lightweight Linux distribution
+- **Nginx deployment**: Uses unprivileged Nginx image
+- **Security**: Enhanced security with `nginx-unprivileged`
+
+### Production Optimization
+
+Build configuration automatically removes `console.log` and `debugger` in production:
+
+```typescript
+// vite.config.ts
+esbuild: {
+  drop: ['console', 'debugger']
+}
+```
+
+## 📝 Code Standards
+
+### TypeScript Configuration
+
+Project uses strict TypeScript configuration:
+
+```json
+{
+  "compilerOptions": {
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true
+  }
+}
+```
+
+### ESLint Rules
+
+- Vue 3 recommended rules
+- TypeScript ESLint rules
+- Custom project rules
+
+Run linting:
+```bash
+npm run lint
+```
+
+### Code Comment Standards
+
+All files should include a top comment:
+
+```typescript
+/**
+ * @file File name
+ * @description File functionality description
+ */
+```
+
+## 🌐 Browser Support
+
+| ![Chrome](https://raw.githubusercontent.com/alrra/browser-logos/master/src/chrome/chrome_48x48.png) | ![Firefox](https://raw.githubusercontent.com/alrra/browser-logos/master/src/firefox/firefox_48x48.png) | ![Safari](https://raw.githubusercontent.com/alrra/browser-logos/master/src/safari/safari_48x48.png) | ![Edge](https://raw.githubusercontent.com/alrra/browser-logos/master/src/edge/edge_48x48.png) |
+| --- | --- | --- | --- |
+| Chrome ≥ 87 | Firefox ≥ 78 | Safari ≥ 14 | Edge ≥ 88 |
+
+## 🤝 Contributing
+
+Issues and Pull Requests are welcome!
+
+1. Fork this repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the [MIT](LICENSE) License.
+
+## 👥 Team
+
+NUS-ISS Agile Team
+
+---
+
+<div align="center">
+
+**[⬆ Back to Top](#ceramicraft-merchant-frontend)**
+
+Made with ❤️ by NUS-ISS Agile Team
+
+</div>
