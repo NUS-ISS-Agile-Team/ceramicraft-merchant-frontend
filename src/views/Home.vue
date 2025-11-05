@@ -7,51 +7,35 @@
       <div class="stat-card">
         <div class="stat-content">
           <div class="stat-main">
-            <div class="stat-value">$24,987</div>
+            <div class="stat-value">{{ totalSalesDisplay }}</div>
             <div class="stat-label">Total Sales</div>
           </div>
-          <div class="stat-change positive">
-            <i class="fas fa-arrow-up"></i>
-            12.5%
-          </div>
         </div>
       </div>
 
       <div class="stat-card">
         <div class="stat-content">
           <div class="stat-main">
-            <div class="stat-value">1,482</div>
+            <div class="stat-value">{{ totalOrdersDisplay }}</div>
             <div class="stat-label">Total Orders</div>
           </div>
-          <div class="stat-change positive">
-            <i class="fas fa-arrow-up"></i>
-            8.2%
-          </div>
         </div>
       </div>
 
       <div class="stat-card">
         <div class="stat-content">
           <div class="stat-main">
-            <div class="stat-value">$16.85</div>
+            <div class="stat-value">{{ avgOrderDisplay }}</div>
             <div class="stat-label">Average Order</div>
           </div>
-          <div class="stat-change negative">
-            <i class="fas fa-arrow-down"></i>
-            2.4%
-          </div>
         </div>
       </div>
 
       <div class="stat-card">
         <div class="stat-content">
           <div class="stat-main">
-            <div class="stat-value">953</div>
+            <div class="stat-value">{{ totalCustomersDisplay }}</div>
             <div class="stat-label">Total Customers</div>
-          </div>
-          <div class="stat-change positive">
-            <i class="fas fa-arrow-up"></i>
-            4.6%
           </div>
         </div>
       </div>
@@ -116,6 +100,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import type { OrderInfoInList } from '../services/order'
+import { OrderAPI } from '../services/order'
 
 interface Sale {
   id: string
@@ -130,6 +115,17 @@ const recentSales = ref<Sale[]>([])
 const loading = ref(false)
 const errorMsg = ref('')
 
+// Dashboard stats
+const totalSales = ref<number | null>(null) // 分
+const totalOrders = ref<number | null>(null)
+const avgOrder = ref<number | null>(null) // 分
+const totalCustomers = ref<number | null>(null)
+
+const totalSalesDisplay = ref<string>('$—')
+const totalOrdersDisplay = ref<string>('—')
+const avgOrderDisplay = ref<string>('$—')
+const totalCustomersDisplay = ref<string>('—')
+
 const router = useRouter()
 
 function viewDetails(id: string) {
@@ -141,6 +137,52 @@ function viewDetails(id: string) {
 onMounted(async () => {
   loading.value = true
   errorMsg.value = ''
+  // load stats in parallel with orders
+  const statsPromise = (async () => {
+    try {
+      const resp = await OrderAPI.getOrderStats()
+      // 打印原始响应，便于在浏览器 console 或后端联调时查看实际结构
+      console.debug('getOrderStats raw response:', resp)
+
+      // 后端返回格式: { status:0, data: { total_sales, total_orders, avg_sales_per_order, total_customers } }
+      // 使用 Record<string, unknown> 来安全处理后端返回的动态字段
+      const payload: Record<string, unknown> = (resp?.data as unknown as Record<string, unknown>) ?? {}
+
+      // 辅助解析：从对象中安全读取 number 类型字段
+      const readNumber = (obj: Record<string, unknown>, key: string): number | null => {
+        if (!obj) return null
+        const v = obj[key]
+        return typeof v === 'number' ? v : null
+      }
+
+      const totalSalesVal = readNumber(payload, 'total_sales')
+      const totalOrdersVal = readNumber(payload, 'total_orders')
+      // 后端返回的字段名是 avg_sales_per_order
+      const avgOrderVal = readNumber(payload, 'avg_sales_per_order')
+      const totalCustomersVal = readNumber(payload, 'total_customers')
+
+      // 赋值并格式化显示（金额假定为分）
+      totalSales.value = totalSalesVal
+      totalOrders.value = totalOrdersVal
+      avgOrder.value = avgOrderVal
+      totalCustomers.value = totalCustomersVal
+
+      totalSalesDisplay.value = totalSales.value !== null ? `$${(totalSales.value / 100).toFixed(2)}` : '$—'
+      totalOrdersDisplay.value = totalOrders.value !== null ? String(totalOrders.value) : '—'
+      avgOrderDisplay.value = avgOrder.value !== null ? `$${(avgOrder.value / 100).toFixed(2)}` : '$—'
+      totalCustomersDisplay.value = totalCustomers.value !== null ? String(totalCustomers.value) : '—'
+      // 如果后端返回了错误信息，且是认证相关，则在界面显示友好提示
+      if (resp && resp.error) {
+        const err = resp.error
+        console.warn('Order stats returned error:', err)
+        if (typeof err === 'string' && err.toLowerCase().includes('auth')) {
+          errorMsg.value = '统计数据需要登录或会话已过期，请重新登录。'
+        }
+      }
+    } catch (err) {
+      console.error('Failed loading order stats:', err)
+    }
+  })()
   try {
     const response = await fetch('/api/order-ms/v1/merchant/orders/list', {
       method: 'POST',
@@ -187,6 +229,8 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
+  // ensure statsPromise resolved (if not awaited before)
+  try { await statsPromise } catch { /* ignore */ }
 })
 </script>
 
